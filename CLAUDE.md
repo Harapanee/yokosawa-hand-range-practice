@@ -78,6 +78,10 @@ open index.html   # Launch in browser (macOS)
 
 No build, lint, or test commands — single HTML file with inline CSS/JS.
 
+## Deployment
+
+Vercel auto-deploys from `main` branch. After confirming changes work correctly (`open index.html` for local check), merge to `main` and push.
+
 ## Language
 
 UI text is in Japanese. Code comments and variable names are in English.
