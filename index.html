@@ -468,6 +468,26 @@ body::after {
   color: var(--gold-light);
   border: 1px solid rgba(201,169,110,0.5);
 }
+.poker-table .dealer-btn {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fff, #e0d8c8);
+  color: #222;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  border: 2px solid #c9a96e;
+  box-shadow: 0 0 6px rgba(201,169,110,0.5), 0 1px 3px rgba(0,0,0,0.4);
+  letter-spacing: 0;
+  line-height: 1;
+}
 .poker-table .hero-label {
   position: absolute;
   bottom: -11px;
@@ -978,6 +998,7 @@ body::after {
 @media (max-width: 360px) {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
+  .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
   .playing-card .card-center { font-size: 30px; }
@@ -1474,12 +1495,28 @@ function addChip(table, slotIndex, text, type, animate) {
 }
 
 function clearTable(table) {
-  table.querySelectorAll('.seat, .chip, #equity-display').forEach(el => el.remove());
+  table.querySelectorAll('.seat, .chip, .dealer-btn, #equity-display').forEach(el => el.remove());
 }
 
 function addBlindsChips(table, heroIdx) {
   addChip(table, getSlotForPosition('SB', heroIdx), '0.5bb', 'blind');
   addChip(table, getSlotForPosition('BB', heroIdx), '1bb', 'blind');
+}
+
+function addDealerButton(table, heroIdx) {
+  table.querySelectorAll('.dealer-btn').forEach(el => el.remove());
+  const slotIndex = getSlotForPosition('BTN', heroIdx);
+  const seat = SLOT_POSITIONS[slotIndex];
+  const seatTop = parseFloat(seat.top);
+  const seatLeft = parseFloat(seat.left);
+  const btnTop = seatTop + (50 - seatTop) * 0.35;
+  const btnLeft = seatLeft + (50 - seatLeft) * 0.35;
+  const el = document.createElement('div');
+  el.className = 'dealer-btn';
+  el.textContent = 'D';
+  el.style.top = btnTop + '%';
+  el.style.left = btnLeft + '%';
+  table.appendChild(el);
 }
 
 function setupTableSeatsWaiting(heroName, behindSet) {
@@ -1503,6 +1540,7 @@ function setupTableSeatsWaiting(heroName, behindSet) {
     table.appendChild(el);
   }
   addBlindsChips(table, heroIdx);
+  addDealerButton(table, heroIdx);
   return { table, heroIdx };
 }
 

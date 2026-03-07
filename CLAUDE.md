@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Single-file web app: `index.html` (~2500 lines of HTML + CSS + JS, no build step). Open directly in a browser. CSS (lines ~9–1140), HTML (lines ~1040–1143 interleaved), JS (lines ~1145–2497). `docs/plans/` contains archived design documents.
+Single-file web app: `index.html` (~2500 lines of HTML + CSS + JS, no build step). Open directly in a browser. CSS (lines ~9–1140), HTML (lines ~1040–1143 interleaved), JS (lines ~1145–2497). `docs/plans/` contains archived design documents. `docs/rules.md` documents the complete answer-checking rules with examples.
 
 ### Design System
 
@@ -22,7 +22,7 @@ Single-file web app: `index.html` (~2500 lines of HTML + CSS + JS, no build step
 ### Key Data Structures (in `<script>` block)
 
 - **`HAND_TIERS`** — Maps each of 169 poker hands (e.g. "AKs", "77") to a tier (1-8, or 0 for fold). Tier definitions are set via `setTiers()` calls.
-- **`POSITIONS`** — Array of 9 positions (UTG through BTN + SB/BB). Each has `maxTier` defining their opening range width. SB/BB have `heroOnly: true`.
+- **`POSITIONS`** — Array of 9 positions (UTG through BTN + SB/BB). Each has `maxTier` defining their opening range width. Only BB has `heroOnly: true` (excluded from `OPENER_POSITIONS`). SB opens with same range as BTN (maxTier 7).
 - **`OPENER_POSITIONS`** — `POSITIONS` filtered to exclude `heroOnly`. オープンレイズ可能なポジション.
 - **`questionLog`** — In-memory array (not persisted) storing each answered question. Each entry has `opponentPosition` (opponent name, or null for open scenario).
 - **`state`** — Main app state: score, current hand/position, scenario, chain status, 3bettor info.
