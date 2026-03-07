@@ -394,6 +394,38 @@ body::after {
   from { opacity: 0; transform: translateX(-50%) translateY(5px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
+#equity-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  text-align: center;
+  opacity: 0;
+  animation: opponentReveal 0.3s ease-out 0.15s forwards;
+}
+.equity-bar {
+  display: flex;
+  width: 100px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.4);
+}
+.equity-fill.hero { background: #4fc3f7; }
+.equity-fill.opp { background: #ef5350; }
+.equity-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+.equity-hero { color: #4fc3f7; }
+.equity-vs { color: rgba(255,255,255,0.4); font-size: 9px; }
+.equity-opp { color: #ef5350; }
 .poker-table .chip.chip-animate-in {
   animation: chipAppear 0.25s ease-out forwards;
 }
@@ -1226,6 +1258,105 @@ function handDisplayInfo(hand) {
   return { rank1, rank2, suit1: s1, suit2: s2, name: hand };
 }
 
+// ============ EQUITY CALCULATOR ============
+
+const RANK_TO_NUM = { '2':0,'3':1,'4':2,'5':3,'6':4,'7':5,'8':6,'9':7,'T':8,'J':9,'Q':10,'K':11,'A':12 };
+const SUIT_TO_NUM = { 's':0,'h':1,'d':2,'c':3 };
+
+function cardIdx(rank, suit) { return RANK_TO_NUM[rank] * 4 + SUIT_TO_NUM[suit]; }
+function cardRank(c) { return Math.floor(c / 4); }
+function cardSuit(c) { return c % 4; }
+
+function evaluate5(cards) {
+  const r = cards.map(cardRank).sort((a, b) => b - a);
+  const s = cards.map(cardSuit);
+  const isFlush = s[0] === s[1] && s[1] === s[2] && s[2] === s[3] && s[3] === s[4];
+  let isStraight = false, straightHi = 0;
+  if (new Set(r).size === 5) {
+    if (r[0] - r[4] === 4) { isStraight = true; straightHi = r[0]; }
+    if (r[0] === 12 && r[1] === 3 && r[2] === 2 && r[3] === 1 && r[4] === 0) { isStraight = true; straightHi = 3; }
+  }
+  const freq = {};
+  r.forEach(v => { freq[v] = (freq[v] || 0) + 1; });
+  const groups = Object.entries(freq).map(([k,v]) => [+k, v]).sort((a,b) => b[1] - a[1] || b[0] - a[0]);
+
+  if (isStraight && isFlush) return 8e8 + straightHi;
+  if (groups[0][1] === 4) return 7e8 + groups[0][0] * 15 + groups[1][0];
+  if (groups[0][1] === 3 && groups[1][1] === 2) return 6e8 + groups[0][0] * 15 + groups[1][0];
+  if (isFlush) return 5e8 + r[0]*15**4 + r[1]*15**3 + r[2]*15**2 + r[3]*15 + r[4];
+  if (isStraight) return 4e8 + straightHi;
+  if (groups[0][1] === 3) {
+    const k = r.filter(v => v !== groups[0][0]);
+    return 3e8 + groups[0][0]*15**2 + k[0]*15 + k[1];
+  }
+  if (groups[0][1] === 2 && groups[1][1] === 2) {
+    const hi = Math.max(groups[0][0], groups[1][0]);
+    const lo = Math.min(groups[0][0], groups[1][0]);
+    const k = r.find(v => v !== hi && v !== lo);
+    return 2e8 + hi*15**2 + lo*15 + k;
+  }
+  if (groups[0][1] === 2) {
+    const k = r.filter(v => v !== groups[0][0]);
+    return 1e8 + groups[0][0]*15**3 + k[0]*15**2 + k[1]*15 + k[2];
+  }
+  return r[0]*15**4 + r[1]*15**3 + r[2]*15**2 + r[3]*15 + r[4];
+}
+
+function evaluate7(cards) {
+  let best = -1;
+  for (let i = 0; i < 7; i++) {
+    for (let j = i + 1; j < 7; j++) {
+      const h = [];
+      for (let k = 0; k < 7; k++) if (k !== i && k !== j) h.push(cards[k]);
+      const s = evaluate5(h);
+      if (s > best) best = s;
+    }
+  }
+  return best;
+}
+
+const equityCache = new Map();
+
+function equityCacheKey(hand1, hand2) {
+  return hand1 < hand2 ? hand1 + '-' + hand2 : hand2 + '-' + hand1;
+}
+
+function getEquity(heroHand, oppHand) {
+  const key = equityCacheKey(heroHand, oppHand);
+  if (equityCache.has(key)) {
+    const cached = equityCache.get(key);
+    return heroHand <= oppHand ? cached : Math.round((100 - cached) * 10) / 10;
+  }
+  const heroInfo = handDisplayInfo(heroHand);
+  const oppInfo = handDisplayInfo(oppHand);
+  const heroCards = [cardIdx(heroInfo.rank1, heroInfo.suit1), cardIdx(heroInfo.rank2, heroInfo.suit2)];
+  const oppCards = [cardIdx(oppInfo.rank1, oppInfo.suit1), cardIdx(oppInfo.rank2, oppInfo.suit2)];
+  if (new Set([...heroCards, ...oppCards]).size < 4) return null;
+  const eq = calcEquityMC(heroCards, oppCards);
+  equityCache.set(key, heroHand <= oppHand ? eq : Math.round((100 - eq) * 10) / 10);
+  return eq;
+}
+
+function calcEquityMC(heroCards, oppCards) {
+  const dead = new Set([...heroCards, ...oppCards]);
+  const deck = [];
+  for (let i = 0; i < 52; i++) if (!dead.has(i)) deck.push(i);
+  let wins = 0, ties = 0;
+  const iterations = 15000;
+  for (let n = 0; n < iterations; n++) {
+    const d = deck.slice();
+    for (let i = 0; i < 5; i++) {
+      const j = i + Math.floor(Math.random() * (d.length - i));
+      const tmp = d[i]; d[i] = d[j]; d[j] = tmp;
+    }
+    const h = evaluate7([heroCards[0], heroCards[1], d[0], d[1], d[2], d[3], d[4]]);
+    const o = evaluate7([oppCards[0], oppCards[1], d[0], d[1], d[2], d[3], d[4]]);
+    if (h > o) wins++;
+    else if (h === o) ties++;
+  }
+  return Math.round((wins + ties / 2) / iterations * 1000) / 10;
+}
+
 // ============ STATE ============
 
 const questionLog = [];
@@ -1347,6 +1478,7 @@ function getSlotForPosition(posName, heroIdx) {
 }
 
 function addChip(table, slotIndex, text, type, animate) {
+  table.querySelectorAll(`.chip[data-slot="${slotIndex}"]`).forEach(el => el.remove());
   const seat = SLOT_POSITIONS[slotIndex];
   const seatTop = parseFloat(seat.top);
   const seatLeft = parseFloat(seat.left);
@@ -1358,18 +1490,19 @@ function addChip(table, slotIndex, text, type, animate) {
   if (animate) chip.classList.add('chip-animate-in');
   chip.style.top = chipTop + '%';
   chip.style.left = chipLeft + '%';
+  chip.dataset.slot = slotIndex;
   chip.textContent = text;
   table.appendChild(chip);
   return chip;
 }
 
 function clearTable(table) {
-  table.querySelectorAll('.seat, .chip').forEach(el => el.remove());
+  table.querySelectorAll('.seat, .chip, #equity-display').forEach(el => el.remove());
 }
 
 function addBlindsChips(table, heroIdx) {
-  addChip(table, getSlotForPosition('SB', heroIdx), '0.5', 'blind');
-  addChip(table, getSlotForPosition('BB', heroIdx), '1', 'blind');
+  addChip(table, getSlotForPosition('SB', heroIdx), '0.5bb', 'blind');
+  addChip(table, getSlotForPosition('BB', heroIdx), '1bb', 'blind');
 }
 
 function setupTableSeatsWaiting(heroName, behindSet) {
@@ -1669,6 +1802,8 @@ function showResultSymbol(isCorrect) {
 async function nextQuestion() {
   state.answered = false;
   state.isChained = false;
+  const eqEl = document.getElementById('equity-display');
+  if (eqEl) eqEl.remove();
   if (animationController.abortController) animationController.abortController.abort();
   animationController.abortController = new AbortController();
   animationController.isAnimating = true;
@@ -1822,6 +1957,30 @@ function showOpponentHand(hand) {
   });
 
   seat.appendChild(container);
+
+  const equity = getEquity(state.currentHand, hand);
+  if (equity !== null) showEquityDisplay(equity);
+}
+
+function showEquityDisplay(heroEquity) {
+  const table = document.getElementById('poker-table');
+  table.querySelectorAll('.chip').forEach(el => el.remove());
+  const existing = document.getElementById('equity-display');
+  if (existing) existing.remove();
+  const oppEquity = Math.round((100 - heroEquity) * 10) / 10;
+  const el = document.createElement('div');
+  el.id = 'equity-display';
+  el.innerHTML =
+    `<div class="equity-bar">` +
+      `<div class="equity-fill hero" style="width:${heroEquity}%"></div>` +
+      `<div class="equity-fill opp" style="width:${oppEquity}%"></div>` +
+    `</div>` +
+    `<div class="equity-labels">` +
+      `<span class="equity-hero">${heroEquity}%</span>` +
+      `<span class="equity-vs">vs</span>` +
+      `<span class="equity-opp">${oppEquity}%</span>` +
+    `</div>`;
+  table.appendChild(el);
 }
 
 function renderHand() {

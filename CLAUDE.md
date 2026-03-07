@@ -16,59 +16,70 @@ Single-file web app: `index.html` (HTML + CSS + JS, no build step). Open directl
 - **Accent**: Champagne gold (`--gold: #c9a96e`) with light/dim variants
 - **Felt**: Green table surface (`--felt` family)
 - **Backgrounds**: Deep black (`--bg-deep: #08080f`)
-- **Semantic colors**: `--green`/`--red` for RAISE/FOLD feedback
+- **Semantic colors**: `--green`/`--red` for correct/incorrect feedback
 - **Fonts**: DM Serif Display (headings), JetBrains Mono (data/scores), DM Sans (body) — loaded from Google Fonts
-- **Textures**: SVG noise overlay on body and felt via `::before` pseudo-elements
 
 ### Key Data Structures (in `<script>` block)
 
 - **`HAND_TIERS`** — Maps each of 169 poker hands (e.g. "AKs", "77") to a tier (1-8, or 0 for fold). Tier definitions are set via `setTiers()` calls.
-- **`POSITIONS`** — Array of 9 positions (UTG through BTN + SB/BB). SB/BB have `heroOnly: true` (vsオープンのヒーロー専用、オープナーにはならない).
-- **`OPENER_POSITIONS`** — `POSITIONS` from UTG to BTN (heroOnly除外). オープンレイズ可能なポジション.
-- **`questionLog`** — In-memory array (not persisted) storing each answered question with scenario, position, hand, tier, user/correct answers, and result.
+- **`POSITIONS`** — Array of 9 positions (UTG through BTN + SB/BB). Each has `maxTier` defining their opening range width. SB/BB have `heroOnly: true`.
+- **`OPENER_POSITIONS`** — `POSITIONS` filtered to exclude `heroOnly`. オープンレイズ可能なポジション.
+- **`questionLog`** — In-memory array (not persisted) storing each answered question.
+- **`state`** — Main app state: score, current hand/position, scenario, chain status, 3bettor info.
+- **`animationController`** — `{ abortController, isAnimating }` for managing async table animations.
 - **Tier colors**: 1=紺, 2=赤, 3=黄, 4=緑, 5=水色, 6=白, 7=紫, 8=ピンク(BB対BTN専用). Defined in `TIER_COLORS`, `TIER_NAMES`, `TIER_TEXT`.
 
-### Navigation
+### Table Visual & Animation System
 
-Fixed bottom tab bar with 3 tabs. Screen switching via `hideAllScreens()` + `.active` class, with corresponding `.tab-btn.active` state. Each screen gets a `screenIn` fade animation on activation.
-
-### Table Visual
-
-- `updateTableSeats(activePos)` dynamically generates 9 seats around an oval (open scenario)
-- `updateTableSeatsVsOpen(openerName, heroName)` — opener seat in `.opener` (red), behind seats in `.behind` (grey)
-- `updateTableSeatsVs3bet(heroName, threeBettorName)` — 3bettor seat in `.opener` (red), no behind seats
+- `setupTableSeatsWaiting(heroName, behindSet)` creates initial table with seats in `.waiting` or `.behind` state
+- `animateFoldSequence(config, signal)` — async animated sequence: seats fold one-by-one until hero/opener/3bettor are revealed
+- `playPostAction(correctAction, signal)` — after correct answer, shows hero's chip and folds behind seats
+- `tryChainTo3bet(signal)` — 40% chance after open RAISE: a behind player 3bets, transitioning to vs-3bet scenario
+- Seat transitions: `transitionToFold()`, `transitionToHero()`, `transitionToOpener()`, `transitionToBehind()`
+- All animations are abortable via `AbortController` / `signal` pattern using `sleep(ms, signal)`
 - Hero always at bottom center (slot 0), other seats placed clockwise via `SLOT_POSITIONS`
-- Seats classified as `.hero` (gold), `.opener` (red — aggressor), `.behind` (grey — acts after hero), `.acted` (dim)
-- Chip indicators (`.chip`) placed between seats and table center: `.chip-blind` (SB/BB), `.chip-raise` (opponent bets), `.chip-hero` (hero's bet)
 - `TABLE_SEATS` = physical clockwise order; `ACTION_ORDER` = preflop action order
-- Helper functions: `getSlotForPosition()`, `addChip()`, `addBlindsChips()`, `clearTable()`
 
 ### Quiz Logic
 
 Three scenarios controlled by `#quiz-scenario` dropdown:
 
-1. **オープン** (`open`) — RAISE / FOLD. `nextQuestionOpen()`. Rule: tier ≤ position.maxTier → RAISE
-2. **vs オープン** (`vs-open`) — 3BET / CALL / FOLD. `nextQuestionVsOpen()`. Rules:
-   - 3BET: tier ≤ opener.maxTier - 2
-   - CALL: tier = opener.maxTier - 1 (BB special: CALL expanded to T6, vs BTN to T8)
+1. **オープン** (`open`) — RAISE / FOLD. Rule: `tier ≤ position.maxTier → RAISE`
+2. **vs オープン** (`vs-open`) — 3BET / CALL / FOLD. Rules:
+   - 3BET: `tier ≤ openerMax - 2`
+   - CALL: `tier = openerMax - 1` (BB special: CALL expanded to T6, vs CO to T7, vs BTN to T8)
    - FOLD: else
-3. **vs 3bet** (`vs-3bet`) — 4BET / CALL / FOLD. `nextQuestionVs3bet()`. Rules:
-   - 4BET: tier ≤ hero.maxTier - 3
-   - CALL: tier = hero.maxTier - 2
+3. **vs 3bet** (`vs-3bet`) — 4BET / CALL / FOLD. Rules:
+   - 4BET: `tier === 1` (always) or `tier ≤ heroMax - 4`
+   - CALL: `tier ≤ heroMax - 2`
    - FOLD: else. Only openable hands dealt.
 
-- `nextQuestion()` dispatches to scenario-specific function, then calls `updateButtons()`
-- `getCorrectAnswer(scenario, hand, heroPos, openerPos)` — centralized answer logic for all scenarios
-- `answer(userAction)` accepts string action ('RAISE','3BET','CALL','4BET','FOLD'), uses `getCorrectAnswer()` for validation
+- `nextQuestion()` is async — sets scenario, calls `updateButtons()`, then dispatches to scenario-specific async function with fold animation
+- Buttons are shown BEFORE animation completes — users can answer during the fold sequence animation
+- `answer(userAction)` is async — guarded by `state.answered` only (not `isAnimating`). On correct: runs post-action animation + optional chain. On vs-3bet: reveals opponent's hand with `showOpponentHand()`.
+- `getCorrectAnswer(scenario, hand, heroPos, openerPos)` — centralized answer logic
 - Score persisted via `localStorage` key `yokosawa-range-state`
-- Stats display: score cards + SVG accuracy ring (circumference = 2 * PI * 23)
 - Keyboard: R/F (open), 3/C/F (vs-open), 4/C/F (vs-3bet)
+- Visual feedback: ○ (green) for correct, ✕ (red) for incorrect — `showResultSymbol()`
+
+### Chain System (open → vs-3bet)
+
+When user correctly RAISEs in open scenario, `tryChainTo3bet()` has 40% chance to trigger:
+1. Hero's 3bb chip appears
+2. Behind seats process: one random seat becomes 3bettor (`.opener` + 9bb chip), others fold
+3. State transitions to `vs-3bet` with `state.isChained = true`
+4. Buttons update to 4BET/CALL/FOLD, user answers the chained question
+5. After chained answer, `nextQuestion()` resumes normal flow
 
 ### UI Screens
 
-1. **Quiz screen** (`#quiz-screen`) — Scenario selector, poker table with chip indicators, playing cards with deal animation, 2-or-3 button layout (dynamic via `updateButtons()`), accuracy ring, confetti/shake feedback
+1. **Quiz screen** (`#quiz-screen`) — Scenario selector, poker table with animated fold sequence, playing cards with deal animation, action buttons, result symbol feedback
 2. **Range table screen** (`#range-screen`) — 13x13 grid colored by tier. Position select uses `<optgroup>`: open-raise views + vs-open BB views. 3BET hands get orange outline, CALL hands get gold outline.
-3. **Log screen** (`#log-screen`) — Scrollable answer history with filter (all/wrong only/correct only), newest first. Shows "hero vs opponent" for multi-scenario entries. Answer badges: green (RAISE/3BET/4BET), blue (CALL), red (FOLD).
+3. **Log screen** (`#log-screen`) — Scrollable answer history with filter (all/wrong only/correct only), newest first.
+
+### Navigation
+
+Bottom tab bar with auto-hide on scroll down, show on scroll up.
 
 ## Development
 
