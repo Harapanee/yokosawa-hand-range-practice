@@ -965,6 +965,7 @@ const TIER_COLORS = {
   5: '#0288d1',
   6: '#e0e0e0',
   7: '#9c27b0',
+  8: '#e91e63',
   0: '#333333'
 };
 
@@ -976,6 +977,7 @@ const TIER_NAMES = {
   5: '水色 - 4~5人',
   6: '白 - 3人',
   7: '紫 - 2人',
+  8: 'ピンク - BB対BTN',
   0: 'フォールド'
 };
 
@@ -987,6 +989,7 @@ const TIER_TEXT = {
   5: '#fff',
   6: '#000',
   7: '#fff',
+  8: '#fff',
   0: '#666'
 };
 
@@ -1003,6 +1006,10 @@ setTiers(4, ['A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KTs','K9s','QTs','
 setTiers(5, ['Q9s','J9s','T8s','98s','QJo','KTo','JTo','A9o','44','33','22']);
 setTiers(6, ['K8s','K7s','K6s','K5s','K4s','K3s','K2s','Q8s','Q7s','Q6s','J8s','J7s','97s','87s','76s','65s','K9o','Q9o','J9o','T9o','QTo','A8o','A7o']);
 setTiers(7, ['Q5s','Q4s','Q3s','Q2s','J6s','T7s','96s','86s','75s','64s','54s','98o','A6o']);
+setTiers(8, [
+  'J5s','J4s','J3s','J2s','T6s','T5s','T4s','T3s','95s','85s','74s','63s','53s','43s',
+  'K8o','Q8o','J8o','T8o','K7o','Q7o','97o','87o','A5o','A4o','A3o','A2o','K6o','K5o'
+]);
 
 const POSITIONS = [
   { name: 'UTG',   players: 8, maxTier: 3 },
@@ -1012,6 +1019,8 @@ const POSITIONS = [
   { name: 'HJ',    players: 4, maxTier: 5 },
   { name: 'CO',    players: 3, maxTier: 6 },
   { name: 'BTN',   players: 2, maxTier: 7 },
+  { name: 'SB', players: 1, maxTier: 0, heroOnly: true },
+  { name: 'BB', players: 0, maxTier: 0, heroOnly: true },
 ];
 
 // ============ UTILITY ============
