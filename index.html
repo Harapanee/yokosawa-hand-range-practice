@@ -1447,13 +1447,6 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
   table.querySelectorAll('.seat').forEach(el => el.remove());
 
   const heroIdx = TABLE_SEATS.indexOf(heroName);
-  const heroActIdx = ACTION_ORDER.indexOf(heroName);
-  const behindSet = new Set();
-  for (let i = heroActIdx + 1; i < ACTION_ORDER.length; i++) {
-    if (ACTION_ORDER[i] !== threeBettorName) {
-      behindSet.add(ACTION_ORDER[i]);
-    }
-  }
 
   for (let s = 0; s < 9; s++) {
     const seatIdx = (heroIdx + s) % 9;
@@ -1468,13 +1461,10 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
     const label = posName === 'UTG+1' ? 'UTG1' : posName;
     if (s === 0) {
       el.classList.add('hero');
-      el.innerHTML = label + '<span class="hero-label">YOU</span>';
+      el.innerHTML = label + '<span class="hero-label">3bb</span>';
     } else if (posName === threeBettorName) {
       el.classList.add('opener');
-      el.innerHTML = label + '<span class="opener-label">3bet</span>';
-    } else if (behindSet.has(posName)) {
-      el.classList.add('behind');
-      el.textContent = label;
+      el.innerHTML = label + '<span class="opener-label">9bb</span>';
     } else {
       el.classList.add('acted');
       el.textContent = label;
