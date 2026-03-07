@@ -1263,8 +1263,9 @@ function getCorrectAnswer(scenario, hand, heroPos, openerPos) {
 
   if (scenario === 'vs-3bet') {
     const heroMax = heroPos.maxTier;
-    if (tier <= heroMax - 3) return '4BET';
-    if (tier === heroMax - 2) return 'CALL';
+    if (tier === 1) return '4BET';
+    if (tier <= heroMax - 4) return '4BET';
+    if (tier <= heroMax - 2) return 'CALL';
     return 'FOLD';
   }
 
