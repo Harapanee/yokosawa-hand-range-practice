@@ -449,6 +449,9 @@ body::after {
   flex-direction: column;
   align-items: center;
 }
+.poker-table .chip-stack.chip-stack-bottom {
+  flex-direction: column-reverse;
+}
 .poker-table .chip-disc {
   width: 22px;
   height: 8px;
@@ -470,6 +473,11 @@ body::after {
 .poker-table .chip-disc:nth-child(3) { filter: brightness(0.95); }
 .poker-table .chip-disc:nth-child(4) { filter: brightness(0.90); }
 .poker-table .chip-disc:nth-child(5) { filter: brightness(0.85); }
+.poker-table .chip-stack-bottom .chip-disc:nth-child(1) { filter: brightness(0.85); }
+.poker-table .chip-stack-bottom .chip-disc:nth-child(2) { filter: brightness(0.90); }
+.poker-table .chip-stack-bottom .chip-disc:nth-child(3) { filter: brightness(0.95); }
+.poker-table .chip-stack-bottom .chip-disc:nth-child(4) { filter: brightness(1.0); }
+.poker-table .chip-stack-bottom .chip-disc:nth-child(5) { filter: brightness(1.05); }
 .poker-table .chip-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 8px;
@@ -1505,10 +1513,12 @@ function addChip(table, slotIndex, text, type, animate) {
   const seatLeft = parseFloat(seat.left);
   const chipTop = seatTop + (50 - seatTop) * 0.45;
   const chipLeft = seatLeft + (50 - seatLeft) * 0.45;
+  const isBottom = seatTop > 50;
 
   const count = CHIP_STACK_MAP[text] || 1;
   const stack = document.createElement('div');
   stack.className = 'chip-stack';
+  if (isBottom) stack.classList.add('chip-stack-bottom');
   if (animate) stack.classList.add('chip-animate-in');
   stack.style.top = chipTop + '%';
   stack.style.left = chipLeft + '%';
