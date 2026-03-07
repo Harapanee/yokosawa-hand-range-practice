@@ -1020,7 +1020,7 @@ body::after {
     <select id="quiz-scenario" onchange="onScenarioChange()">
       <option value="open">オープン</option>
       <option value="vs-open">vs オープン</option>
-      <option value="vs-3bet">vs 3bet</option>
+      <option value="mix">ミックス</option>
     </select>
     <span id="quiz-position-label" style="margin-left:8px;">ポジション:</span>
     <select id="quiz-position-filter" onchange="nextQuestion()">
@@ -1159,7 +1159,7 @@ const POSITIONS = [
   { name: 'HJ',    players: 4, maxTier: 5 },
   { name: 'CO',    players: 3, maxTier: 6 },
   { name: 'BTN',   players: 2, maxTier: 7 },
-  { name: 'SB', players: 1, maxTier: 0, heroOnly: true },
+  { name: 'SB', players: 1, maxTier: 7 },
   { name: 'BB', players: 0, maxTier: 0, heroOnly: true },
 ];
 
@@ -1742,7 +1742,10 @@ async function nextQuestion() {
   animationController.abortController = new AbortController();
   animationController.isAnimating = true;
 
-  const scenario = document.getElementById('quiz-scenario').value;
+  let scenario = document.getElementById('quiz-scenario').value;
+  if (scenario === 'mix') {
+    scenario = Math.random() < 0.5 ? 'open' : 'vs-open';
+  }
   state.scenario = scenario;
   updateButtons();
 
@@ -1751,8 +1754,6 @@ async function nextQuestion() {
       await nextQuestionOpen(animationController.abortController.signal);
     } else if (scenario === 'vs-open') {
       await nextQuestionVsOpen(animationController.abortController.signal);
-    } else if (scenario === 'vs-3bet') {
-      await nextQuestionVs3bet(animationController.abortController.signal);
     }
   } catch (e) {
     if (e.name === 'AbortError') return;
@@ -1820,52 +1821,6 @@ async function nextQuestionVsOpen(signal) {
   await animateFoldSequence({ scenario: 'vs-open', table, heroIdx, heroName: hero.name, openerName: opener.name }, signal);
 }
 
-async function nextQuestionVs3bet(signal) {
-  // Hero is the original opener
-  const hero = OPENER_POSITIONS[Math.floor(Math.random() * OPENER_POSITIONS.length)];
-  state.currentPosition = hero;
-  state.openerPosition = hero; // hero is the opener in this scenario
-
-  // 3bettor is someone behind hero
-  const threeBettorCandidates = getHeroPositionsBehind(hero.name);
-  const threeBettor = threeBettorCandidates[Math.floor(Math.random() * threeBettorCandidates.length)];
-  state.threeBettorPosition = threeBettor;
-
-  // Generate 3bettor's hand from their 3bet range
-  const threeBetRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= hero.maxTier - 2; });
-  state.threeBettorHand = threeBetRange.length > 0
-    ? threeBetRange[Math.floor(Math.random() * threeBetRange.length)]
-    : null;
-
-  // Only deal hands hero would have opened (tier 1 to hero.maxTier)
-  const openableHands = ALL_HANDS.filter(h => {
-    const t = getTier(h);
-    return t >= 1 && t <= hero.maxTier;
-  });
-
-  // 50/50 between continue-worthy and fold-worthy hands
-  const allAnswers = openableHands.map(h => ({
-    hand: h,
-    answer: getCorrectAnswer('vs-3bet', h, hero, null)
-  }));
-  const continuable = allAnswers.filter(a => a.answer !== 'FOLD');
-  const foldable = allAnswers.filter(a => a.answer === 'FOLD');
-
-  if (Math.random() < 0.5 && continuable.length > 0) {
-    state.currentHand = continuable[Math.floor(Math.random() * continuable.length)].hand;
-  } else if (foldable.length > 0) {
-    state.currentHand = foldable[Math.floor(Math.random() * foldable.length)].hand;
-  } else if (continuable.length > 0) {
-    state.currentHand = continuable[Math.floor(Math.random() * continuable.length)].hand;
-  } else {
-    state.currentHand = openableHands[Math.floor(Math.random() * openableHands.length)];
-  }
-
-  renderHand();
-  const { table, heroIdx } = setupTableSeatsWaiting(hero.name);
-  await animateFoldSequence({ scenario: 'vs-3bet', table, heroIdx, heroName: hero.name, threeBettorName: threeBettor.name }, signal);
-}
-
 function showOpponentHand(hand) {
   if (!hand) return;
   const table = document.getElementById('poker-table');
@@ -1927,11 +1882,6 @@ function updateButtons() {
   } else if (scenario === 'vs-open') {
     row.innerHTML =
       '<button class="btn btn-3bet" onclick="answer(\'3BET\')">3BET</button>' +
-      '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
-      '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
-  } else if (scenario === 'vs-3bet') {
-    row.innerHTML =
-      '<button class="btn btn-3bet" onclick="answer(\'4BET\')">4BET</button>' +
       '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
       '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
   }
@@ -2264,10 +2214,6 @@ document.addEventListener('keydown', (e) => {
     if (key === '3') answer('3BET');
     if (key === 'C') answer('CALL');
     if (key === 'F') answer('FOLD');
-  } else if (scenario === 'vs-3bet') {
-    if (key === '4') answer('4BET');
-    if (key === 'C') answer('CALL');
-    if (key === 'F') answer('FOLD');
   }
 });
 
@@ -2319,8 +2265,8 @@ function onScenarioChange() {
     hint.textContent = 'R / F キー対応';
   } else if (scenario === 'vs-open') {
     hint.textContent = '3 / C / F キー対応';
-  } else if (scenario === 'vs-3bet') {
-    hint.textContent = '4 / C / F キー対応';
+  } else if (scenario === 'mix') {
+    hint.textContent = 'R / 3 / C / F キー対応';
   }
 
   nextQuestion();
