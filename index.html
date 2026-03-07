@@ -34,6 +34,27 @@
   --felt-dark: #c8e6c9;
 }
 
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --bg-card: #2a2a2a;
+  --bg-card-border: #3a3a3a;
+  --surface: #333;
+  --text: #d0d0d0;
+  --text-dim: #888;
+  --text-bright: #f0f0f0;
+  --green: #58cc02;
+  --green-dark: #46a302;
+  --red: #ff4b4b;
+  --red-dark: #cc3c3c;
+  --blue: #1cb0f6;
+  --purple: #ce82ff;
+  --orange: #ff9600;
+  --gold: #ff9600;
+  --felt: #1b4332;
+  --felt-light: #2d6a4f;
+  --felt-dark: #143b2a;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -1037,6 +1058,76 @@ body {
   .stat-card { padding: 8px 8px; }
   .stat-card .stat-value { font-size: 17px; }
 }
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle {
+  position: absolute;
+  top: 14px;
+  left: 4px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.theme-toggle:hover { opacity: 1; }
+
+/* ===== DARK MODE OVERRIDES ===== */
+[data-theme="dark"] .tab-bar {
+  background: #2a2a2a;
+  border-top-color: #3a3a3a;
+}
+[data-theme="dark"] .poker-table .felt {
+  background: linear-gradient(135deg, #1b4332 0%, #143b2a 100%);
+  border-color: #2d6a4f;
+}
+[data-theme="dark"] .poker-table .seat {
+  background: #333;
+  border-color: #4a4a4a;
+}
+[data-theme="dark"] .poker-table .seat.behind {
+  background: #2a2a2a;
+  color: #666;
+  border-color: #3a3a3a;
+}
+[data-theme="dark"] .poker-table .seat.acted {
+  background: #222;
+  color: #555;
+  border-color: #333;
+}
+[data-theme="dark"] .poker-table .seat.waiting {
+  background: #333;
+  border-color: #4a4a4a;
+}
+[data-theme="dark"] .playing-card {
+  background: #2a2a2a;
+  border-color: #4a4a4a;
+}
+[data-theme="dark"] .mini-card {
+  background: #333;
+  border-color: #4a4a4a;
+}
+[data-theme="dark"] .dealer-btn {
+  background: #333;
+}
+[data-theme="dark"] .range-cell.fold-cell {
+  background: #2a2a2a !important;
+  color: #555;
+}
+[data-theme="dark"] .log-entry {
+  border-bottom-color: #333;
+}
+[data-theme="dark"] .log-entry .log-pos {
+  background: #333;
+}
+[data-theme="dark"] .accuracy-ring-wrap .ring-bg {
+  stroke: #3a3a3a;
+}
 </style>
 </head>
 <body>
@@ -1061,6 +1152,7 @@ body {
       <div class="stat-value"><span id="streak">0</span></div>
       <div class="stat-label">連続 / 最高<span id="best-streak">0</span></div>
     </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="テーマ切替"></button>
     <button class="reset-btn" onclick="resetScore()" title="リセット">&#x21bb;</button>
   </div>
 
@@ -1795,7 +1887,12 @@ async function tryChainTo3bet(signal) {
 
 // ============ CARD RENDERING ============
 
-const SUIT_COLORS = { s: '#3c3c3c', h: '#ff4b4b', d: '#1cb0f6', c: '#58cc02' };
+const SUIT_COLORS_LIGHT = { s: '#3c3c3c', h: '#ff4b4b', d: '#1cb0f6', c: '#58cc02' };
+const SUIT_COLORS_DARK = { s: '#d0d0d0', h: '#ff6b6b', d: '#4dc4f9', c: '#7dd830' };
+function getSuitColor(suit) {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return (isDark ? SUIT_COLORS_DARK : SUIT_COLORS_LIGHT)[suit];
+}
 
 function renderPlayingCards(info) {
   const container = document.getElementById('playing-cards');
@@ -1806,7 +1903,7 @@ function renderPlayingCards(info) {
   ];
   cards.forEach(c => {
     const sym = SUIT_SYMBOLS[c.suit];
-    const color = SUIT_COLORS[c.suit];
+    const color = getSuitColor(c.suit);
     const el = document.createElement('div');
     el.className = 'playing-card';
     el.style.color = color;
@@ -1935,7 +2032,7 @@ function showOpponentHand(hand) {
   [{ rank: info.rank1, suit: info.suit1 }, { rank: info.rank2, suit: info.suit2 }].forEach(c => {
     const card = document.createElement('div');
     card.className = 'mini-card';
-    card.style.color = SUIT_COLORS[c.suit];
+    card.style.color = getSuitColor(c.suit);
     card.innerHTML = `<span>${c.rank}</span><span>${SUIT_SYMBOLS[c.suit]}</span>`;
     container.appendChild(card);
   });
@@ -2382,8 +2479,36 @@ function onScenarioChange() {
   nextQuestion();
 }
 
+// ============ THEME ============
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('yokosawa-theme', newTheme);
+  updateThemeIcon();
+  if (state.currentHand) renderHand();
+}
+
+function updateThemeIcon() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.getElementById('theme-toggle').textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('yokosawa-theme');
+  if (saved) {
+    document.documentElement.setAttribute('data-theme', saved);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  updateThemeIcon();
+}
+
 // ============ INIT ============
 
+loadTheme();
 loadState();
 updateStats();
 populatePositionSelect();
