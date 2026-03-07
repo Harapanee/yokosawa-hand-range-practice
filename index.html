@@ -998,6 +998,18 @@ body::after {
 .log-answer.raise { background: rgba(45,138,78,0.2); color: var(--green-bright); }
 .log-answer.call { background: rgba(21,101,192,0.2); color: #42a5f5; }
 .log-answer.fold { background: rgba(168,50,50,0.2); color: var(--red-bright); }
+.log-entry .log-scenario {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+}
+.log-scenario.sc-open { background: rgba(45,138,78,0.15); color: var(--green-bright); }
+.log-scenario.sc-vs-open { background: rgba(21,101,192,0.15); color: #42a5f5; }
+.log-scenario.sc-vs-3bet { background: rgba(201,169,110,0.15); color: var(--gold); }
 .log-count {
   font-size: 11px;
   color: var(--text-dim);
@@ -2360,9 +2372,13 @@ function renderLog() {
     const posText = e.openerPosition
       ? e.position + ' vs ' + e.openerPosition
       : e.position;
+    const scenarioLabel = e.scenario === 'open' ? 'OPEN'
+      : e.scenario === 'vs-open' ? 'vsOP' : 'vs3B';
+    const scenarioClass = 'sc-' + e.scenario;
     return '<div class="log-entry">' +
       '<span class="log-icon ' + iconClass + '">' + icon + '</span>' +
       '<span class="log-pos">' + posText + '</span>' +
+      '<span class="log-scenario ' + scenarioClass + '">' + scenarioLabel + '</span>' +
       '<span class="log-hand">' + e.hand + '</span>' +
       '<span class="log-answer ' + ansClass + '">' + e.userAnswer + '</span>' +
       '<span class="log-detail"><span class="log-tier-badge" style="background:' + tierColor + '"></span>' + tierLabel + ' → ' + e.correctAnswer + '</span>' +
