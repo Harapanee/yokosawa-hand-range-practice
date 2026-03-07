@@ -427,7 +427,7 @@ body::after {
 .equity-hero { color: #4fc3f7; }
 .equity-vs { color: rgba(255,255,255,0.4); font-size: 9px; }
 .equity-opp { color: #ef5350; }
-.poker-table .chip.chip-animate-in {
+.poker-table .chip-stack.chip-animate-in {
   animation: chipAppear 0.25s ease-out forwards;
 }
 @keyframes chipAppear {
@@ -441,56 +441,42 @@ body::after {
   box-shadow: 0 0 12px rgba(208,64,64,0.3);
   overflow: visible;
 }
-.poker-table .chip {
+.poker-table .chip-stack {
   position: absolute;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
   transform: translate(-50%, -50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+.poker-table .chip-disc {
+  width: 22px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 35% 35%, #f5f0e0, #d4c9a8);
+  border: 1.5px dashed rgba(160,140,100,0.5);
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.4),
+    inset 0 1px 1px rgba(255,255,255,0.3);
+  margin-top: -4px;
+}
+.poker-table .chip-disc:first-child {
+  margin-top: 0;
+}
+.poker-table .chip-disc:nth-child(1) { filter: brightness(0.85); }
+.poker-table .chip-disc:nth-child(2) { filter: brightness(0.90); }
+.poker-table .chip-disc:nth-child(3) { filter: brightness(0.95); }
+.poker-table .chip-disc:nth-child(4) { filter: brightness(1.0); }
+.poker-table .chip-disc:nth-child(5) { filter: brightness(1.05); }
+.poker-table .chip-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 6px;
   font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 3;
-  line-height: 1;
+  color: #3a3020;
   white-space: nowrap;
-  padding: 0;
-  border: 2.5px dashed rgba(255,255,255,0.4);
-  box-shadow:
-    0 2px 4px rgba(0,0,0,0.5),
-    inset 0 1px 1px rgba(255,255,255,0.15);
-}
-.poker-table .chip-white {
-  background: radial-gradient(circle at 35% 35%, #f5f5f5, #c8c8c8);
-  color: #333;
-  border-color: rgba(80,80,80,0.5);
-}
-.poker-table .chip-red {
-  background: radial-gradient(circle at 35% 35%, #e03030, #8b1a1a);
-  color: #fff;
-  border-color: rgba(255,255,255,0.4);
-}
-.poker-table .chip-green {
-  background: radial-gradient(circle at 35% 35%, #38a34a, #1a6b28);
-  color: #fff;
-  border-color: rgba(255,255,255,0.4);
-}
-.poker-table .chip-black {
-  background: radial-gradient(circle at 35% 35%, #444, #111);
-  color: #fff;
-  border-color: rgba(255,255,255,0.3);
-}
-.poker-table .chip-purple {
-  background: radial-gradient(circle at 35% 35%, #8844bb, #552288);
-  color: #fff;
-  border-color: rgba(255,255,255,0.35);
-}
-.poker-table .chip-gold {
-  background: radial-gradient(circle at 35% 35%, #d4b474, #9a7840);
-  color: #1a1200;
-  border-color: rgba(255,255,255,0.35);
+  line-height: 1;
+  margin-top: 1px;
+  text-shadow: 0 0 2px rgba(255,255,255,0.6);
 }
 .poker-table .dealer-btn {
   position: absolute;
@@ -1023,7 +1009,9 @@ body::after {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
   .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
-  .poker-table .chip { width: 18px; height: 18px; font-size: 5px; border-width: 2px; }
+  .poker-table .chip-disc { width: 18px; height: 8px; margin-top: -3px; }
+  .poker-table .chip-disc:first-child { margin-top: 0; }
+  .poker-table .chip-label { font-size: 5px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
   .playing-card .card-center { font-size: 30px; }
@@ -1500,38 +1488,41 @@ function getSlotForPosition(posName, heroIdx) {
   return (seatIdx - heroIdx + 9) % 9;
 }
 
-const CHIP_COLOR_MAP = {
-  '0.5bb': 'chip-white',
-  '1bb': 'chip-red',
-  '3bb': 'chip-green',
-  '9bb': 'chip-black',
-  '27bb': 'chip-purple',
-  'call': 'chip-gold',
+const CHIP_STACK_MAP = {
+  '0.5bb': 1, '1bb': 2, '3bb': 3,
+  '9bb': 4, '27bb': 5, 'call': 3,
 };
 
 function addChip(table, slotIndex, text, type, animate) {
-  table.querySelectorAll(`.chip[data-slot="${slotIndex}"]`).forEach(el => el.remove());
+  table.querySelectorAll(`.chip-stack[data-slot="${slotIndex}"]`).forEach(el => el.remove());
   const seat = SLOT_POSITIONS[slotIndex];
   const seatTop = parseFloat(seat.top);
   const seatLeft = parseFloat(seat.left);
   const chipTop = seatTop + (50 - seatTop) * 0.45;
   const chipLeft = seatLeft + (50 - seatLeft) * 0.45;
 
-  const chip = document.createElement('div');
-  chip.className = 'chip';
-  const colorClass = CHIP_COLOR_MAP[text] || 'chip-white';
-  chip.classList.add(colorClass);
-  if (animate) chip.classList.add('chip-animate-in');
-  chip.style.top = chipTop + '%';
-  chip.style.left = chipLeft + '%';
-  chip.dataset.slot = slotIndex;
-  chip.textContent = text;
-  table.appendChild(chip);
-  return chip;
+  const count = CHIP_STACK_MAP[text] || 1;
+  const stack = document.createElement('div');
+  stack.className = 'chip-stack';
+  if (animate) stack.classList.add('chip-animate-in');
+  stack.style.top = chipTop + '%';
+  stack.style.left = chipLeft + '%';
+  stack.dataset.slot = slotIndex;
+  for (let i = 0; i < count; i++) {
+    const disc = document.createElement('div');
+    disc.className = 'chip-disc';
+    stack.appendChild(disc);
+  }
+  const label = document.createElement('div');
+  label.className = 'chip-label';
+  label.textContent = text;
+  stack.appendChild(label);
+  table.appendChild(stack);
+  return stack;
 }
 
 function clearTable(table) {
-  table.querySelectorAll('.seat, .chip, .dealer-btn, #equity-display').forEach(el => el.remove());
+  table.querySelectorAll('.seat, .chip-stack, .dealer-btn, #equity-display').forEach(el => el.remove());
 }
 
 function addBlindsChips(table, heroIdx) {
@@ -1921,7 +1912,7 @@ function showOpponentHand(hand) {
 
 function showEquityDisplay(heroEquity) {
   const table = document.getElementById('poker-table');
-  table.querySelectorAll('.chip').forEach(el => el.remove());
+  table.querySelectorAll('.chip-stack').forEach(el => el.remove());
   const existing = document.getElementById('equity-display');
   if (existing) existing.remove();
   const oppEquity = Math.round((100 - heroEquity) * 10) / 10;
