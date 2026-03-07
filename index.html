@@ -86,6 +86,10 @@ body::after {
   align-items: stretch;
   z-index: 200;
   padding-bottom: env(safe-area-inset-bottom);
+  transition: transform 0.3s ease;
+}
+.tab-bar.hidden {
+  transform: translateY(100%);
 }
 .tab-bar-inner {
   display: flex;
@@ -2163,6 +2167,22 @@ document.addEventListener('keydown', (e) => {
     if (key === 'F') answer('FOLD');
   }
 });
+
+// ============ TAB BAR AUTO-HIDE ============
+
+{
+  let lastScrollY = 0;
+  const tabBar = document.querySelector('.tab-bar');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (y > lastScrollY && y > 30) {
+      tabBar.classList.add('hidden');
+    } else {
+      tabBar.classList.remove('hidden');
+    }
+    lastScrollY = y;
+  }, { passive: true });
+}
 
 // ============ SCENARIO CHANGE ============
 
