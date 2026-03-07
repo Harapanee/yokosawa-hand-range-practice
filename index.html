@@ -1066,7 +1066,7 @@ body::after {
       <option value="vs-open">vs オープン</option>
       <option value="vs-3bet">vs 3bet</option>
     </select>
-    <span style="margin-left:8px;">ポジション:</span>
+    <span id="quiz-position-label" style="margin-left:8px;">ポジション:</span>
     <select id="quiz-position-filter" onchange="nextQuestion()">
       <option value="all">全ポジション</option>
     </select>
@@ -1334,14 +1334,28 @@ function equityCacheKey(hand1, hand2) {
   return hand1 < hand2 ? hand1 + '-' + hand2 : hand2 + '-' + hand1;
 }
 
+function fixedSuitPair(hand) {
+  let rank1, rank2;
+  if (hand.length === 2) {
+    rank1 = hand[0]; rank2 = hand[1];
+    return { rank1, rank2, suit1: 's', suit2: 'h' };
+  } else if (hand[2] === 's') {
+    rank1 = hand[0]; rank2 = hand[1];
+    return { rank1, rank2, suit1: 's', suit2: 's' };
+  } else {
+    rank1 = hand[0]; rank2 = hand[1];
+    return { rank1, rank2, suit1: 's', suit2: 'h' };
+  }
+}
+
 function getEquity(heroHand, oppHand) {
   const key = equityCacheKey(heroHand, oppHand);
   if (equityCache.has(key)) {
     const cached = equityCache.get(key);
     return heroHand <= oppHand ? cached : Math.round((100 - cached) * 10) / 10;
   }
-  const heroInfo = handDisplayInfo(heroHand);
-  const oppInfo = handDisplayInfo(oppHand);
+  const heroInfo = fixedSuitPair(heroHand);
+  const oppInfo = fixedSuitPair(oppHand);
   const heroCards = [cardIdx(heroInfo.rank1, heroInfo.suit1), cardIdx(heroInfo.rank2, heroInfo.suit2)];
   const oppCards = [cardIdx(oppInfo.rank1, oppInfo.suit1), cardIdx(oppInfo.rank2, oppInfo.suit2)];
   if (new Set([...heroCards, ...oppCards]).size < 4) return null;
@@ -2002,85 +2016,6 @@ function renderHand() {
   renderPlayingCards(info);
 }
 
-function updateTableSeatsVs3bet(heroName, threeBettorName) {
-  const table = document.getElementById('poker-table');
-  clearTable(table);
-
-  const heroIdx = TABLE_SEATS.indexOf(heroName);
-
-  for (let s = 0; s < 9; s++) {
-    const seatIdx = (heroIdx + s) % 9;
-    const posName = TABLE_SEATS[seatIdx];
-    const slot = SLOT_POSITIONS[s];
-
-    const el = document.createElement('div');
-    el.className = 'seat';
-    el.style.top = slot.top;
-    el.style.left = slot.left;
-
-    const label = posName === 'UTG+1' ? 'UTG1' : posName;
-    if (s === 0) {
-      el.classList.add('hero');
-      el.innerHTML = label + '<span class="hero-label">YOU</span>';
-    } else if (posName === threeBettorName) {
-      el.classList.add('opener');
-      el.textContent = label;
-    } else {
-      el.classList.add('acted');
-      el.textContent = label;
-    }
-
-    table.appendChild(el);
-  }
-
-  addBlindsChips(table, heroIdx);
-  addChip(table, 0, '3bb', 'hero');
-  addChip(table, getSlotForPosition(threeBettorName, heroIdx), '9bb', 'raise');
-}
-
-function updateTableSeatsVsOpen(openerName, heroName) {
-  const table = document.getElementById('poker-table');
-  clearTable(table);
-
-  const heroIdx = TABLE_SEATS.indexOf(heroName);
-  const heroActIdx = ACTION_ORDER.indexOf(heroName);
-  const behindSet = new Set();
-  for (let i = heroActIdx + 1; i < ACTION_ORDER.length; i++) {
-    behindSet.add(ACTION_ORDER[i]);
-  }
-
-  for (let s = 0; s < 9; s++) {
-    const seatIdx = (heroIdx + s) % 9;
-    const posName = TABLE_SEATS[seatIdx];
-    const slot = SLOT_POSITIONS[s];
-
-    const el = document.createElement('div');
-    el.className = 'seat';
-    el.style.top = slot.top;
-    el.style.left = slot.left;
-
-    const label = posName === 'UTG+1' ? 'UTG1' : posName;
-    if (s === 0) {
-      el.classList.add('hero');
-      el.innerHTML = label + '<span class="hero-label">YOU</span>';
-    } else if (posName === openerName) {
-      el.classList.add('opener');
-      el.textContent = label;
-    } else if (behindSet.has(posName)) {
-      el.classList.add('behind');
-      el.textContent = label;
-    } else {
-      el.classList.add('acted');
-      el.textContent = label;
-    }
-
-    table.appendChild(el);
-  }
-
-  addBlindsChips(table, heroIdx);
-  addChip(table, getSlotForPosition(openerName, heroIdx), '3bb', 'raise');
-}
-
 function updateButtons() {
   const row = document.getElementById('btn-row');
   const scenario = state.scenario || 'open';
@@ -2127,7 +2062,7 @@ async function answer(userAction) {
   questionLog.unshift({
     scenario: scenario,
     position: state.currentPosition.name,
-    openerPosition: scenario === 'vs-3bet'
+    opponentPosition: scenario === 'vs-3bet'
       ? state.threeBettorPosition.name
       : (state.openerPosition ? state.openerPosition.name : null),
     hand: hand,
@@ -2369,8 +2304,8 @@ function renderLog() {
     const icon = e.isCorrect ? '&#10004;' : '&#10008;';
     const ansClass = e.userAnswer === 'FOLD' ? 'fold'
       : e.userAnswer === 'CALL' ? 'call' : 'raise';
-    const posText = e.openerPosition
-      ? e.position + ' vs ' + e.openerPosition
+    const posText = e.opponentPosition
+      ? e.position + ' vs ' + e.opponentPosition
       : e.position;
     const scenarioLabel = e.scenario === 'open' ? 'OPEN'
       : e.scenario === 'vs-open' ? 'vsOP' : 'vs3B';
@@ -2472,6 +2407,11 @@ function onScenarioChange() {
       opt.textContent = p.name;
       sel.appendChild(opt);
     });
+    sel.style.display = '';
+    document.getElementById('quiz-position-label').style.display = '';
+  } else {
+    sel.style.display = 'none';
+    document.getElementById('quiz-position-label').style.display = 'none';
   }
 
   const hint = document.querySelector('.kb-hint');

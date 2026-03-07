@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-Single-file web app: `index.html` (HTML + CSS + JS, no build step). Open directly in a browser.
+Single-file web app: `index.html` (~2500 lines of HTML + CSS + JS, no build step). Open directly in a browser. CSS (lines ~9–1140), HTML (lines ~1040–1143 interleaved), JS (lines ~1145–2497). `docs/plans/` contains archived design documents.
 
 ### Design System
 
@@ -24,7 +24,7 @@ Single-file web app: `index.html` (HTML + CSS + JS, no build step). Open directl
 - **`HAND_TIERS`** — Maps each of 169 poker hands (e.g. "AKs", "77") to a tier (1-8, or 0 for fold). Tier definitions are set via `setTiers()` calls.
 - **`POSITIONS`** — Array of 9 positions (UTG through BTN + SB/BB). Each has `maxTier` defining their opening range width. SB/BB have `heroOnly: true`.
 - **`OPENER_POSITIONS`** — `POSITIONS` filtered to exclude `heroOnly`. オープンレイズ可能なポジション.
-- **`questionLog`** — In-memory array (not persisted) storing each answered question.
+- **`questionLog`** — In-memory array (not persisted) storing each answered question. Each entry has `opponentPosition` (opponent name, or null for open scenario).
 - **`state`** — Main app state: score, current hand/position, scenario, chain status, 3bettor info.
 - **`animationController`** — `{ abortController, isAnimating }` for managing async table animations.
 - **Tier colors**: 1=紺, 2=赤, 3=黄, 4=緑, 5=水色, 6=白, 7=紫, 8=ピンク(BB対BTN専用). Defined in `TIER_COLORS`, `TIER_NAMES`, `TIER_TEXT`.
@@ -75,7 +75,9 @@ When user correctly RAISEs in open scenario, `tryChainTo3bet()` has 40% chance t
 
 1. **Quiz screen** (`#quiz-screen`) — Scenario selector, poker table with animated fold sequence, playing cards with deal animation, action buttons, result symbol feedback
 2. **Range table screen** (`#range-screen`) — 13x13 grid colored by tier. Position select uses `<optgroup>`: open-raise views + vs-open BB views. 3BET hands get orange outline, CALL hands get gold outline.
-3. **Log screen** (`#log-screen`) — Scrollable answer history with filter (all/wrong only/correct only), newest first.
+3. **Log screen** (`#log-screen`) — Scrollable answer history with filter (all/wrong only/correct only), newest first. Each entry shows scenario badge, position, hand, user answer, and correct answer.
+
+Quiz screen has a position filter dropdown (`populateQuizPositionFilter`) to restrict which positions appear. Confetti animation fires on milestone streaks.
 
 ### Navigation
 
