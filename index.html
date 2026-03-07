@@ -1605,8 +1605,24 @@ function renderRange() {
   const grid = document.getElementById('range-grid');
   grid.innerHTML = '';
 
-  const selVal = parseInt(document.getElementById('range-position').value);
-  const pos = selVal >= 0 ? POSITIONS[selVal] : null;
+  const selVal = document.getElementById('range-position').value;
+
+  let mode = 'all';
+  let pos = null;
+  let openerPos = null;
+  let heroPos = null;
+
+  if (selVal === '-1') {
+    mode = 'all';
+  } else if (selVal.startsWith('open-')) {
+    mode = 'open';
+    pos = OPENER_POSITIONS[parseInt(selVal.split('-')[1])];
+  } else if (selVal.startsWith('vs-open-bb-')) {
+    mode = 'vs-open';
+    const idx = parseInt(selVal.split('-').pop());
+    openerPos = OPENER_POSITIONS[idx];
+    heroPos = POSITIONS.find(p => p.name === 'BB');
+  }
 
   for (let r = 0; r < 13; r++) {
     for (let c = 0; c < 13; c++) {
@@ -1623,8 +1639,18 @@ function renderRange() {
         cell.style.color = TIER_TEXT[tier];
       }
 
-      if (pos) {
+      if (mode === 'open' && pos) {
         if (tier >= 1 && tier <= pos.maxTier) {
+          cell.classList.add('in-range');
+        } else {
+          cell.classList.add('out-of-range');
+        }
+      } else if (mode === 'vs-open' && openerPos && heroPos) {
+        const action = getCorrectAnswer('vs-open', hand, heroPos, openerPos);
+        if (action === '3BET') {
+          cell.classList.add('in-range');
+          cell.style.outlineColor = '#ff9800';
+        } else if (action === 'CALL') {
           cell.classList.add('in-range');
         } else {
           cell.classList.add('out-of-range');
@@ -1639,7 +1665,7 @@ function renderRange() {
 function buildLegend() {
   const legend = document.getElementById('legend');
   legend.innerHTML = '';
-  for (let t = 1; t <= 7; t++) {
+  for (let t = 1; t <= 8; t++) {
     const item = document.createElement('div');
     item.className = 'legend-item';
     item.innerHTML = `<span class="legend-color" style="background:${TIER_COLORS[t]}"></span>T${t}: ${TIER_NAMES[t]}`;
@@ -1649,12 +1675,27 @@ function buildLegend() {
 
 function populatePositionSelect() {
   const sel = document.getElementById('range-position');
-  POSITIONS.forEach((p, i) => {
+  // Keep the "全ティア表示" default option that's already in HTML
+
+  const openGroup = document.createElement('optgroup');
+  openGroup.label = 'オープンレイズ';
+  OPENER_POSITIONS.forEach((p, i) => {
     const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${p.name} (${p.players}人) - T1~T${p.maxTier}`;
-    sel.appendChild(opt);
+    opt.value = 'open-' + i;
+    opt.textContent = p.name + ' (' + p.players + '人) - T1~T' + p.maxTier;
+    openGroup.appendChild(opt);
   });
+  sel.appendChild(openGroup);
+
+  const vsOpenGroup = document.createElement('optgroup');
+  vsOpenGroup.label = 'vs オープン (BB視点)';
+  OPENER_POSITIONS.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = 'vs-open-bb-' + i;
+    opt.textContent = 'BB vs ' + p.name + 'オープン';
+    vsOpenGroup.appendChild(opt);
+  });
+  sel.appendChild(vsOpenGroup);
 }
 
 function populateQuizPositionFilter() {
@@ -1687,18 +1728,21 @@ function renderLog() {
   }
 
   list.innerHTML = entries.map(e => {
-    const tierColor = TIER_COLORS[e.tier];
-    const tierLabel = e.tier === 0 ? 'Fold' : `T${e.tier}`;
+    const tierColor = TIER_COLORS[e.tier] || TIER_COLORS[0];
+    const tierLabel = e.tier === 0 ? 'Fold' : 'T' + e.tier;
     const iconClass = e.isCorrect ? 'correct' : 'wrong';
     const icon = e.isCorrect ? '&#10004;' : '&#10008;';
-    const ansClass = e.userAnswer === 'RAISE' ? 'raise' : 'fold';
-    return `<div class="log-entry">
-      <span class="log-icon ${iconClass}">${icon}</span>
-      <span class="log-pos">${e.position}</span>
-      <span class="log-hand">${e.hand}</span>
-      <span class="log-answer ${ansClass}">${e.userAnswer}</span>
-      <span class="log-detail"><span class="log-tier-badge" style="background:${tierColor}"></span>${tierLabel} → ${e.correctAnswer}</span>
-    </div>`;
+    const ansClass = e.userAnswer === 'FOLD' ? 'fold' : 'raise';
+    const posText = e.openerPosition
+      ? e.position + ' vs ' + e.openerPosition
+      : e.position;
+    return '<div class="log-entry">' +
+      '<span class="log-icon ' + iconClass + '">' + icon + '</span>' +
+      '<span class="log-pos">' + posText + '</span>' +
+      '<span class="log-hand">' + e.hand + '</span>' +
+      '<span class="log-answer ' + ansClass + '">' + e.userAnswer + '</span>' +
+      '<span class="log-detail"><span class="log-tier-badge" style="background:' + tierColor + '"></span>' + tierLabel + ' → ' + e.correctAnswer + '</span>' +
+    '</div>';
   }).join('');
 }
 
