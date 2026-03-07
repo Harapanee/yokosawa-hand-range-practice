@@ -431,8 +431,8 @@ body::after {
   animation: chipAppear 0.25s ease-out forwards;
 }
 @keyframes chipAppear {
-  from { opacity: 0; transform: translateX(-50%) scale(0.5); }
-  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 .poker-table .seat.opener {
   background: rgba(168,50,50,0.75);
@@ -443,7 +443,7 @@ body::after {
 }
 .poker-table .chip-stack {
   position: absolute;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 3;
   display: flex;
   flex-direction: column;
@@ -1506,34 +1506,22 @@ const CHIP_STACK_MAP = {
   '9bb': 4, '27bb': 5, 'call': 3,
 };
 
-function getPositionNearFelt(slotIndex, insetPx) {
+function getPositionNearFelt(slotIndex, clearancePx) {
   const seat = SLOT_POSITIONS[slotIndex];
-  const seatLeftPct = parseFloat(seat.left);
-  const seatTopPct = parseFloat(seat.top);
-  // Convert to pixel space (table 300×180)
-  const seatX = seatLeftPct * 3, seatY = seatTopPct * 1.8;
-  const cx = 150, cy = 90, a = 126, b = 66;
+  const seatX = parseFloat(seat.left) * 3;   // % → px in 300×180 space
+  const seatY = parseFloat(seat.top) * 1.8;
+  const cx = 150, cy = 90;
   const dx = cx - seatX, dy = cy - seatY;
   const dist = Math.sqrt(dx * dx + dy * dy);
-  const nx = dx / dist, ny = dy / dist;
-  // Ray-ellipse intersection: find t where seat + t*(center-seat) hits ellipse
-  const ux = seatX - cx, uy = seatY - cy;
-  const A = (dx * dx) / (a * a) + (dy * dy) / (b * b);
-  const B = 2 * ((ux * dx) / (a * a) + (uy * dy) / (b * b));
-  const C = (ux * ux) / (a * a) + (uy * uy) / (b * b) - 1;
-  const disc = B * B - 4 * A * C;
-  const t1 = (-B - Math.sqrt(disc)) / (2 * A);
-  const t2 = (-B + Math.sqrt(disc)) / (2 * A);
-  const tE = t1 > 0.001 ? t1 : t2;
-  // Point on ellipse edge, then move insetPx pixels toward center
-  const ex = seatX + tE * dx + nx * insetPx;
-  const ey = seatY + tE * dy + ny * insetPx;
-  return { left: ex / 3, top: ey / 1.8 };
+  if (dist < 1) return { left: 50, top: 50 };
+  const px = seatX + (dx / dist) * clearancePx;
+  const py = seatY + (dy / dist) * clearancePx;
+  return { left: px / 3, top: py / 1.8 };
 }
 
 function addChip(table, slotIndex, text, type, animate) {
   table.querySelectorAll(`.chip-stack[data-slot="${slotIndex}"]`).forEach(el => el.remove());
-  const pos = getPositionNearFelt(slotIndex, 15);
+  const pos = getPositionNearFelt(slotIndex, 38);
   const isBottom = parseFloat(SLOT_POSITIONS[slotIndex].top) > 50;
 
   const count = CHIP_STACK_MAP[text] || 1;
@@ -1569,7 +1557,7 @@ function addBlindsChips(table, heroIdx) {
 function addDealerButton(table, heroIdx) {
   table.querySelectorAll('.dealer-btn').forEach(el => el.remove());
   const slotIndex = getSlotForPosition('BTN', heroIdx);
-  const pos = getPositionNearFelt(slotIndex, 8);
+  const pos = getPositionNearFelt(slotIndex, 35);
   const el = document.createElement('div');
   el.className = 'dealer-btn';
   el.textContent = 'D';
