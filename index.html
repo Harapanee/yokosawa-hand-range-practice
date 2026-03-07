@@ -713,6 +713,26 @@ body::after {
 }
 
 /* ===== CONFETTI ===== */
+.result-symbol {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 120px;
+  font-weight: 900;
+  z-index: 300;
+  pointer-events: none;
+  opacity: 0;
+  animation: resultPop 0.6s ease-out forwards;
+}
+.result-symbol.correct { color: var(--green); }
+.result-symbol.wrong { color: var(--red-bright); }
+@keyframes resultPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  50%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
 .confetti-container {
   position: fixed;
   inset: 0;
@@ -1636,24 +1656,12 @@ function renderPlayingCards(info) {
 
 // ============ CONFETTI ============
 
-function spawnConfetti() {
-  const container = document.getElementById('confetti-container');
-  const colors = ['#c9a96e','#e4d5a8','#3daa64','#5cb8ff','#e8c44a','#ab47bc'];
-  const count = 14;
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('div');
-    el.className = 'confetti';
-    el.style.left = (25 + Math.random() * 50) + '%';
-    el.style.top = (25 + Math.random() * 25) + '%';
-    el.style.background = colors[Math.floor(Math.random() * colors.length)];
-    el.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
-    el.style.animationDelay = (Math.random() * 0.12) + 's';
-    el.style.animationName = 'confettiFall';
-    el.style.animationTimingFunction = 'ease-out';
-    el.style.animationFillMode = 'forwards';
-    container.appendChild(el);
-    el.addEventListener('animationend', () => el.remove());
-  }
+function showResultSymbol(isCorrect) {
+  const el = document.createElement('div');
+  el.className = 'result-symbol ' + (isCorrect ? 'correct' : 'wrong');
+  el.textContent = isCorrect ? '○' : '✕';
+  document.body.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
 }
 
 // ============ QUIZ LOGIC ============
@@ -1980,8 +1988,9 @@ async function answer(userAction) {
   void screen.offsetWidth;
   screen.classList.add(isCorrect ? 'flash-correct' : 'flash-wrong');
 
+  showResultSymbol(isCorrect);
+
   if (isCorrect) {
-    spawnConfetti();
 
     if (animationController.abortController) animationController.abortController.abort();
     animationController.abortController = new AbortController();
