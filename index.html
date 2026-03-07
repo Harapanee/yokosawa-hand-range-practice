@@ -2436,7 +2436,6 @@ document.addEventListener('keydown', (e) => {
   }
 
   window.addEventListener('scroll', showTabBar, { passive: true });
-  window.addEventListener('touchstart', showTabBar, { passive: true });
 
   if (isMobile()) {
     hideTimer = setTimeout(() => tabBar.classList.add('hidden'), 3000);
