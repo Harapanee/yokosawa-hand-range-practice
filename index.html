@@ -364,6 +364,36 @@ body::after {
   white-space: nowrap;
 }
 .poker-table .seat.fold-shown .fold-text { opacity: 1; }
+.opponent-cards {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+  z-index: 10;
+  opacity: 0;
+  animation: opponentReveal 0.3s ease-out forwards;
+}
+.mini-card {
+  width: 20px;
+  height: 28px;
+  background: #fff;
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1.1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+@keyframes opponentReveal {
+  from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 .poker-table .chip.chip-animate-in {
   animation: chipAppear 0.25s ease-out forwards;
 }
@@ -1191,6 +1221,7 @@ let state = {
   scenario: 'open',
   openerPosition: null,
   threeBettorPosition: null,
+  threeBettorHand: null,
   isChained: false,
 };
 
@@ -1523,6 +1554,12 @@ async function tryChainTo3bet(signal) {
   state.answered = false;
   state.isChained = true;
 
+  const heroMax = state.currentPosition.maxTier;
+  const chainRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= heroMax - 2; });
+  state.threeBettorHand = chainRange.length > 0
+    ? chainRange[Math.floor(Math.random() * chainRange.length)]
+    : null;
+
   document.getElementById('position-label').innerHTML =
     `あなた: <strong>${heroName}</strong>オープン → ${threeBettorName}の3bet`;
 
@@ -1721,6 +1758,12 @@ async function nextQuestionVs3bet(signal) {
   const threeBettor = threeBettorCandidates[Math.floor(Math.random() * threeBettorCandidates.length)];
   state.threeBettorPosition = threeBettor;
 
+  // Generate 3bettor's hand from their 3bet range
+  const threeBetRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= hero.maxTier - 2; });
+  state.threeBettorHand = threeBetRange.length > 0
+    ? threeBetRange[Math.floor(Math.random() * threeBetRange.length)]
+    : null;
+
   // Only deal hands hero would have opened (tier 1 to hero.maxTier)
   const openableHands = ALL_HANDS.filter(h => {
     const t = getTier(h);
@@ -1750,6 +1793,27 @@ async function nextQuestionVs3bet(signal) {
   renderHand();
   const { table, heroIdx } = setupTableSeatsWaiting(hero.name);
   await animateFoldSequence({ scenario: 'vs-3bet', table, heroIdx, heroName: hero.name, threeBettorName: threeBettor.name }, signal);
+}
+
+function showOpponentHand(hand) {
+  if (!hand) return;
+  const table = document.getElementById('poker-table');
+  const seat = getSeatByPosition(table, state.threeBettorPosition.name);
+  if (!seat) return;
+
+  const info = handDisplayInfo(hand);
+  const container = document.createElement('div');
+  container.className = 'opponent-cards';
+
+  [{ rank: info.rank1, suit: info.suit1 }, { rank: info.rank2, suit: info.suit2 }].forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'mini-card';
+    card.style.color = SUIT_COLORS[c.suit];
+    card.innerHTML = `<span>${c.rank}</span><span>${SUIT_SYMBOLS[c.suit]}</span>`;
+    container.appendChild(card);
+  });
+
+  seat.appendChild(container);
 }
 
 function renderHand() {
@@ -1932,6 +1996,10 @@ async function answer(userAction) {
         }
       }
       await playPostAction(userAction, signal);
+      if (scenario === 'vs-3bet' && state.threeBettorHand) {
+        showOpponentHand(state.threeBettorHand);
+        await sleep(1200, signal);
+      }
     } catch (e) {
       if (e.name === 'AbortError') return;
       throw e;
@@ -1942,6 +2010,20 @@ async function answer(userAction) {
     btnRow.classList.remove('shake');
     void btnRow.offsetWidth;
     btnRow.classList.add('shake');
+
+    if (scenario === 'vs-3bet' && state.threeBettorHand) {
+      showOpponentHand(state.threeBettorHand);
+      if (animationController.abortController) animationController.abortController.abort();
+      animationController.abortController = new AbortController();
+      animationController.isAnimating = true;
+      try {
+        await sleep(1200, animationController.abortController.signal);
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+        throw e;
+      }
+      animationController.isAnimating = false;
+    }
   }
 
   state.isChained = false;
