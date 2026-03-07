@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ヨコサワ ハンドレンジ練習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a96e;
+  --gold-light: #e4d5a8;
+  --gold-dim: #8a7244;
+  --felt: #1a5c2a;
+  --felt-light: #267d3a;
+  --felt-dark: #0e3d1a;
+  --bg-deep: #08080f;
+  --bg: #0d0d18;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-border: rgba(255,255,255,0.06);
+  --surface: #141422;
+  --text: #d4d0c8;
+  --text-dim: #6b6860;
+  --text-bright: #f0ece4;
+  --green: #2d8a4e;
+  --green-bright: #3daa64;
+  --red: #a83232;
+  --red-bright: #d04040;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  padding-bottom: 72px;
+  position: relative;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow */
+body::after {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(201,169,110,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== BOTTOM TAB BAR ===== */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(8,8,15,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(201,169,110,0.1);
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  z-index: 200;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.tab-bar-inner {
+  display: flex;
+  width: 100%;
+  max-width: 480px;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.tab-btn .tab-icon {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.3s, color 0.3s;
+}
+.tab-btn.active {
+  color: var(--gold);
+}
+.tab-btn.active .tab-icon {
+  transform: scale(1.15);
+}
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 0 0 2px 2px;
+}
+
+/* ===== SCREENS ===== */
+.screen {
+  display: none;
+  width: 100%;
+  max-width: 480px;
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+}
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: screenIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== STATS ===== */
+.stats {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 0 12px;
+  margin-bottom: 6px;
+  position: relative;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+  text-align: center;
+  min-width: 0;
+  flex: 1;
+}
+.stat-card .stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
+  line-height: 1.2;
+}
+.stat-card .stat-label {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-top: 3px;
+  font-weight: 600;
+}
+.stat-card.accent {
+  border-color: rgba(201,169,110,0.15);
+  background: rgba(201,169,110,0.04);
+}
+.stat-card.accent .stat-value { color: var(--gold); }
+
+/* Accuracy ring */
+.accuracy-ring-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.accuracy-ring-wrap svg {
+  transform: rotate(-90deg);
+  width: 56px;
+  height: 56px;
+}
+.accuracy-ring-wrap .ring-bg {
+  fill: none;
+  stroke: rgba(255,255,255,0.05);
+  stroke-width: 3.5;
+}
+.accuracy-ring-wrap .ring-fg {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 0 4px rgba(201,169,110,0.3));
+}
+.accuracy-ring-wrap .ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+/* ===== QUIZ FILTER ===== */
+.quiz-filter {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+}
+.quiz-filter select {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--bg-card-border);
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  -webkit-appearance: none;
+}
+
+/* ===== POKER TABLE ===== */
+.table-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+.poker-table {
+  position: relative;
+  width: 300px;
+  height: 180px;
+  max-width: calc(100vw - 48px);
+}
+.poker-table .felt {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  background:
+    radial-gradient(ellipse at 50% 35%, var(--felt-light) 0%, var(--felt) 40%, var(--felt-dark) 100%);
+  border-radius: 50%;
+  border: 3px solid #4a3728;
+  box-shadow:
+    0 0 0 5px #2c1e14,
+    0 0 0 7px rgba(74,55,40,0.4),
+    0 0 0 9px rgba(44,30,20,0.2),
+    inset 0 0 40px rgba(0,0,0,0.4),
+    inset 0 -8px 20px rgba(0,0,0,0.2);
+}
+/* Felt texture */
+.poker-table .felt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 128 128' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+}
+.poker-table .seat {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: #555;
+  background: rgba(20,20,34,0.85);
+  border: 2px solid rgba(255,255,255,0.08);
+  transform: translate(-50%, -50%);
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  line-height: 1.1;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+.poker-table .seat.hero {
+  background: linear-gradient(145deg, var(--gold), var(--gold-dim));
+  color: #1a1200;
+  border-color: var(--gold-light);
+  box-shadow:
+    0 0 16px rgba(201,169,110,0.4),
+    0 0 40px rgba(201,169,110,0.15);
+  z-index: 2;
+  width: 46px;
+  height: 46px;
+  font-size: 10px;
+  animation: heroPulse 3s ease-in-out infinite;
+}
+@keyframes heroPulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(201,169,110,0.4), 0 0 40px rgba(201,169,110,0.15); }
+  50% { box-shadow: 0 0 20px rgba(201,169,110,0.55), 0 0 48px rgba(201,169,110,0.2); }
+}
+.poker-table .seat.behind {
+  background: rgba(45,55,65,0.75);
+  color: #8a9aa8;
+  border-color: rgba(120,144,156,0.3);
+}
+.poker-table .seat.acted {
+  background: rgba(15,15,28,0.6);
+  color: #3a3a48;
+  border-color: rgba(255,255,255,0.04);
+}
+.poker-table .hero-label {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 8px;
+  color: var(--gold-light);
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(8,8,15,0.85);
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 1.5px;
+  border: 1px solid rgba(201,169,110,0.2);
+}
+.position-label {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-top: 14px;
+  margin-bottom: 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* ===== PLAYING CARDS ===== */
+.hand-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.playing-cards {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+  perspective: 600px;
+}
+.playing-card {
+  width: 82px;
+  height: 116px;
+  background: linear-gradient(160deg, #fff 0%, #f8f6f0 40%, #ede8dd 100%);
+  border-radius: 10px;
+  position: relative;
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.2),
+    0 8px 24px rgba(0,0,0,0.4),
+    0 1px 0 rgba(255,255,255,0.9) inset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(180,170,150,0.4);
+  opacity: 0;
+  animation: cardDeal 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Card inner border */
+.playing-card::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(201,169,110,0.12);
+  border-radius: 7px;
+  pointer-events: none;
+}
+.playing-card:nth-child(1) { animation-name: cardDeal1; }
+.playing-card:nth-child(2) { animation-name: cardDeal2; animation-delay: 0.06s; }
+@keyframes cardDeal1 {
+  0% { opacity: 0; transform: translateY(-24px) rotate(0deg) scale(0.7); }
+  100% { opacity: 1; transform: rotate(-5deg) scale(1); }
+}
+@keyframes cardDeal2 {
+  0% { opacity: 0; transform: translateY(-24px) rotate(0deg) scale(0.7); }
+  100% { opacity: 1; transform: rotate(5deg) scale(1); }
+}
+.playing-card .card-corner {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  text-align: center;
+  line-height: 1;
+}
+.playing-card .card-corner-br {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  text-align: center;
+  line-height: 1;
+  transform: rotate(180deg);
+}
+.playing-card .corner-rank {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  font-weight: 400;
+  display: block;
+}
+.playing-card .corner-suit {
+  font-size: 13px;
+  display: block;
+  margin-top: -1px;
+}
+.playing-card .card-center {
+  font-size: 38px;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
+}
+
+/* ===== BUTTONS ===== */
+.btn-row {
+  display: flex;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.btn {
+  flex: 1;
+  padding: 18px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 2px;
+  position: relative;
+  overflow: hidden;
+}
+/* Glass highlight */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+  pointer-events: none;
+  border-radius: 14px 14px 0 0;
+}
+.btn:active { transform: scale(0.96) translateY(1px); }
+.btn:disabled { opacity: 0.25; cursor: default; transform: none; }
+.btn-raise {
+  background: linear-gradient(180deg, var(--green-bright) 0%, var(--green) 100%);
+  color: #fff;
+  box-shadow:
+    0 4px 16px rgba(45,138,78,0.35),
+    inset 0 -2px 0 rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.btn-fold {
+  background: linear-gradient(180deg, var(--red-bright) 0%, var(--red) 100%);
+  color: #fff;
+  box-shadow:
+    0 4px 16px rgba(168,50,50,0.35),
+    inset 0 -2px 0 rgba(0,0,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.15);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.btn-raise.chosen {
+  box-shadow: 0 0 0 3px rgba(61,170,100,0.6), 0 0 24px rgba(61,170,100,0.3);
+}
+.btn-fold.chosen {
+  box-shadow: 0 0 0 3px rgba(208,64,64,0.6), 0 0 24px rgba(208,64,64,0.3);
+}
+
+/* Shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-5px); }
+  30%, 60%, 90% { transform: translateX(5px); }
+}
+.shake { animation: shake 0.35s ease-in-out; }
+
+/* ===== LAST RESULT BAR ===== */
+.last-result {
+  width: 100%;
+  min-height: 40px;
+  margin-bottom: 8px;
+}
+.last-result-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  animation: resultFadeLife 2s ease-out forwards;
+  backdrop-filter: blur(12px);
+}
+.last-result-inner.correct {
+  background: rgba(45,138,78,0.2);
+  color: var(--green-bright);
+  border: 1px solid rgba(61,170,100,0.2);
+}
+.last-result-inner.wrong {
+  background: rgba(168,50,50,0.2);
+  color: var(--red-bright);
+  border: 1px solid rgba(208,64,64,0.2);
+}
+.last-result-inner .lr-icon { font-size: 18px; }
+.last-result-inner .lr-tier-badge {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+.last-result-inner .lr-detail {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+@keyframes resultFadeLife {
+  0% { transform: translateY(-6px); opacity: 0; }
+  8% { transform: translateY(0); opacity: 1; }
+  65% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ===== SCREEN FLASH ===== */
+#quiz-screen::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+}
+#quiz-screen.flash-correct::before {
+  background: radial-gradient(ellipse at 50% 60%, rgba(45,138,78,0.25), transparent 65%);
+  opacity: 1;
+  animation: flashFade 0.45s ease-out forwards;
+}
+#quiz-screen.flash-wrong::before {
+  background: radial-gradient(ellipse at 50% 60%, rgba(168,50,50,0.25), transparent 65%);
+  opacity: 1;
+  animation: flashFade 0.45s ease-out forwards;
+}
+@keyframes flashFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ===== CONFETTI ===== */
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150;
+  overflow: hidden;
+}
+.confetti {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+}
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(100px) rotate(540deg) scale(0); opacity: 0; }
+}
+
+/* ===== RESET BUTTON ===== */
+.reset-btn {
+  position: absolute;
+  top: 14px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.reset-btn:hover { color: var(--text); }
+
+/* ===== KEYBOARD HINT ===== */
+.kb-hint {
+  font-size: 10px;
+  color: rgba(107,104,96,0.5);
+  text-align: center;
+  margin-top: 4px;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+/* ===== RANGE TABLE SCREEN ===== */
+.range-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.range-header h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-bright);
+}
+.position-select {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--bg-card-border);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.range-grid {
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 2px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+.range-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  border-radius: 3px;
+  color: #000;
+  position: relative;
+  line-height: 1;
+  transition: opacity 0.25s, outline-color 0.25s;
+}
+@media (min-width: 400px) {
+  .range-cell { font-size: 10px; }
+}
+@media (min-width: 500px) {
+  .range-cell { font-size: 11px; }
+}
+.range-cell.in-range {
+  outline: 2px solid var(--gold);
+  outline-offset: -1px;
+  z-index: 1;
+}
+.range-cell.out-of-range {
+  opacity: 0.2;
+}
+.range-cell.fold-cell {
+  background: rgba(255,255,255,0.04) !important;
+  color: #3a3a48;
+}
+
+/* Tier legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+  width: 100%;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* ===== LOG SCREEN ===== */
+.log-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.log-header h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-bright);
+}
+.log-filter select {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--bg-card-border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+.log-list {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 60vh;
+  margin-bottom: 16px;
+}
+.log-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 48px 0;
+  font-size: 13px;
+  font-style: italic;
+}
+.log-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 13px;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-entry .log-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+.log-entry .log-icon.correct { color: var(--green-bright); }
+.log-entry .log-icon.wrong { color: var(--red-bright); }
+.log-entry .log-pos {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.log-entry .log-hand {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--text-bright);
+  flex-shrink: 0;
+  font-size: 13px;
+}
+.log-entry .log-detail {
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+.log-entry .log-tier-badge {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+.log-entry .log-answer {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.log-answer.raise { background: rgba(45,138,78,0.2); color: var(--green-bright); }
+.log-answer.fold { background: rgba(168,50,50,0.2); color: var(--red-bright); }
+.log-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: center;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+/* ===== SMALL SCREEN ===== */
+@media (max-width: 360px) {
+  .poker-table { width: 260px; height: 156px; }
+  .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
+  .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
+  .playing-card { width: 70px; height: 100px; }
+  .playing-card .card-center { font-size: 30px; }
+  .playing-card .corner-rank { font-size: 15px; }
+  .playing-card .corner-suit { font-size: 11px; }
+  .btn { padding: 16px; font-size: 16px; }
+  .stats { gap: 6px; }
+  .stat-card { padding: 8px 8px; }
+  .stat-card .stat-value { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Quiz Screen -->
+<div id="quiz-screen" class="screen active">
+  <div class="stats" style="position: relative;">
+    <div class="stat-card">
+      <div class="stat-value"><span id="correct-count">0</span><span style="font-size:13px;color:var(--text-dim)"> / </span><span id="total-count">0</span></div>
+      <div class="stat-label">正解数</div>
+    </div>
+    <div class="accuracy-ring-wrap" id="accuracy-ring">
+      <svg viewBox="0 0 56 56">
+        <circle class="ring-bg" cx="28" cy="28" r="23" />
+        <circle class="ring-fg" id="accuracy-circle" cx="28" cy="28" r="23"
+          stroke-dasharray="144.51"
+          stroke-dashoffset="144.51" />
+      </svg>
+      <div class="ring-text"><span id="accuracy">-</span>%</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-value"><span id="streak">0</span></div>
+      <div class="stat-label">連続 / 最高<span id="best-streak">0</span></div>
+    </div>
+    <button class="reset-btn" onclick="resetScore()" title="リセット">&#x21bb;</button>
+  </div>
+
+  <div class="quiz-filter">
+    練習ポジション:
+    <select id="quiz-position-filter" onchange="nextQuestion()">
+      <option value="all">全ポジション</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <div class="poker-table" id="poker-table">
+      <div class="felt"></div>
+    </div>
+  </div>
+  <div class="position-label" id="position-label"></div>
+
+  <div class="hand-label" id="hand-name"></div>
+  <div class="playing-cards" id="playing-cards"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-raise" id="btn-raise" onclick="answer(true)">RAISE</button>
+    <button class="btn btn-fold" id="btn-fold" onclick="answer(false)">FOLD</button>
+  </div>
+
+  <div class="last-result" id="last-result"></div>
+
+  <div class="kb-hint">R / F キー対応</div>
+</div>
+
+<!-- Range Table Screen -->
+<div id="range-screen" class="screen">
+  <div class="range-header">
+    <h2>レンジ表</h2>
+    <select class="position-select" id="range-position" onchange="renderRange()">
+      <option value="-1">全ティア表示</option>
+    </select>
+  </div>
+
+  <div class="legend" id="legend"></div>
+  <div class="range-grid" id="range-grid"></div>
+</div>
+
+<!-- Log Screen -->
+<div id="log-screen" class="screen">
+  <div class="log-header">
+    <h2>回答履歴</h2>
+    <div class="log-filter">
+      <select id="log-filter" onchange="renderLog()">
+        <option value="all">全て</option>
+        <option value="wrong">不正解のみ</option>
+        <option value="correct">正解のみ</option>
+      </select>
+    </div>
+  </div>
+  <div class="log-count" id="log-count"></div>
+  <div class="log-list" id="log-list"></div>
+</div>
+
+<!-- Bottom Tab Bar -->
+<nav class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn active" id="tab-quiz" onclick="showQuiz()">
+      <span class="tab-icon">&#9824;</span>
+      <span>クイズ</span>
+    </button>
+    <button class="tab-btn" id="tab-range" onclick="showRange()">
+      <span class="tab-icon">&#9638;</span>
+      <span>レンジ表</span>
+    </button>
+    <button class="tab-btn" id="tab-log" onclick="showLog()">
+      <span class="tab-icon">&#9776;</span>
+      <span>履歴</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Confetti container -->
+<div class="confetti-container" id="confetti-container"></div>
+
+<script>
+// ============ DATA ============
+
+const RANKS = ['A','K','Q','J','T','9','8','7','6','5','4','3','2'];
+
+const TIER_COLORS = {
+  1: '#1a237e',
+  2: '#c62828',
+  3: '#f9a825',
+  4: '#2e7d32',
+  5: '#0288d1',
+  6: '#e0e0e0',
+  7: '#9c27b0',
+  0: '#333333'
+};
+
+const TIER_NAMES = {
+  1: '紺 - 8人強',
+  2: '赤 - 8人中',
+  3: '黄 - 8人弱',
+  4: '緑 - 6~7人',
+  5: '水色 - 4~5人',
+  6: '白 - 3人',
+  7: '紫 - 2人',
+  0: 'フォールド'
+};
+
+const TIER_TEXT = {
+  1: '#fff',
+  2: '#fff',
+  3: '#000',
+  4: '#fff',
+  5: '#fff',
+  6: '#000',
+  7: '#fff',
+  0: '#666'
+};
+
+const HAND_TIERS = {};
+
+function setTiers(tier, hands) {
+  hands.forEach(h => { HAND_TIERS[h] = tier; });
+}
+
+setTiers(1, ['AA','KK','QQ','AKs','AKo']);
+setTiers(2, ['AQs','AJs','ATs','KQs','AQo','JJ','TT','99']);
+setTiers(3, ['KJs','KQo','AJo','QJs','JTs','88','77']);
+setTiers(4, ['A9s','A8s','A7s','A6s','A5s','A4s','A3s','A2s','KTs','K9s','QTs','KJo','ATo','T9s','66','55']);
+setTiers(5, ['Q9s','J9s','T8s','98s','QJo','KTo','JTo','A9o','44','33','22']);
+setTiers(6, ['K8s','K7s','K6s','K5s','K4s','K3s','K2s','Q8s','Q7s','Q6s','J8s','J7s','97s','87s','76s','65s','K9o','Q9o','J9o','T9o','QTo','A8o','A7o']);
+setTiers(7, ['Q5s','Q4s','Q3s','Q2s','J6s','T7s','96s','86s','75s','64s','54s','98o','A6o']);
+
+const POSITIONS = [
+  { name: 'UTG',   players: 8, maxTier: 3 },
+  { name: 'UTG+1', players: 7, maxTier: 4 },
+  { name: 'MP',    players: 6, maxTier: 4 },
+  { name: 'LJ',    players: 5, maxTier: 5 },
+  { name: 'HJ',    players: 4, maxTier: 5 },
+  { name: 'CO',    players: 3, maxTier: 6 },
+  { name: 'BTN',   players: 2, maxTier: 7 },
+];
+
+// ============ UTILITY ============
+
+function gridToHand(row, col) {
+  if (row === col) return RANKS[row] + RANKS[col];
+  if (row < col) return RANKS[row] + RANKS[col] + 's';
+  return RANKS[col] + RANKS[row] + 'o';
+}
+
+function getTier(hand) {
+  return HAND_TIERS[hand] || 0;
+}
+
+const ALL_HANDS = [];
+for (let r = 0; r < 13; r++) {
+  for (let c = 0; c < 13; c++) {
+    ALL_HANDS.push(gridToHand(r, c));
+  }
+}
+
+const SUIT_SYMBOLS = {
+  s: '\u2660',
+  h: '\u2665',
+  d: '\u2666',
+  c: '\u2663',
+};
+
+function randomSuitPair(type) {
+  const suits = ['s','h','d','c'];
+  const shuffle = () => suits[Math.floor(Math.random() * 4)];
+  if (type === 'pair') {
+    const s1 = shuffle();
+    let s2 = shuffle();
+    while (s2 === s1) s2 = shuffle();
+    return [s1, s2];
+  } else if (type === 'suited') {
+    const s = shuffle();
+    return [s, s];
+  } else {
+    const s1 = shuffle();
+    let s2 = shuffle();
+    while (s2 === s1) s2 = shuffle();
+    return [s1, s2];
+  }
+}
+
+function handDisplayInfo(hand) {
+  let rank1, rank2, type;
+  if (hand.length === 2) {
+    rank1 = hand[0]; rank2 = hand[1]; type = 'pair';
+  } else if (hand[2] === 's') {
+    rank1 = hand[0]; rank2 = hand[1]; type = 'suited';
+  } else {
+    rank1 = hand[0]; rank2 = hand[1]; type = 'offsuit';
+  }
+  const [s1, s2] = randomSuitPair(type);
+  return { rank1, rank2, suit1: s1, suit2: s2, name: hand };
+}
+
+// ============ STATE ============
+
+const questionLog = [];
+
+let state = {
+  correct: 0,
+  total: 0,
+  streak: 0,
+  bestStreak: 0,
+  currentHand: null,
+  currentPosition: null,
+  answered: false,
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('yokosawa-range-state');
+    if (saved) {
+      const s = JSON.parse(saved);
+      state.correct = s.correct || 0;
+      state.total = s.total || 0;
+      state.streak = s.streak || 0;
+      state.bestStreak = s.bestStreak || 0;
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('yokosawa-range-state', JSON.stringify({
+      correct: state.correct,
+      total: state.total,
+      streak: state.streak,
+      bestStreak: state.bestStreak,
+    }));
+  } catch(e) {}
+}
+
+// ============ TABLE VISUAL ============
+
+const TABLE_SEATS = ['BTN','SB','BB','UTG','UTG+1','MP','LJ','HJ','CO'];
+
+const SLOT_POSITIONS = [
+  { top: '96%', left: '50%' },
+  { top: '80%', left: '14%' },
+  { top: '48%', left: '2%'  },
+  { top: '14%', left: '14%' },
+  { top: '0%',  left: '36%' },
+  { top: '0%',  left: '64%' },
+  { top: '14%', left: '86%' },
+  { top: '48%', left: '98%' },
+  { top: '80%', left: '86%' },
+];
+
+const ACTION_ORDER = ['UTG','UTG+1','MP','LJ','HJ','CO','BTN','SB','BB'];
+
+function updateTableSeats(activePos) {
+  const table = document.getElementById('poker-table');
+  table.querySelectorAll('.seat').forEach(el => el.remove());
+
+  const heroIdx = TABLE_SEATS.indexOf(activePos);
+  const actIdx = ACTION_ORDER.indexOf(activePos);
+  const behindSet = new Set();
+  for (let i = actIdx + 1; i < ACTION_ORDER.length; i++) {
+    behindSet.add(ACTION_ORDER[i]);
+  }
+
+  for (let s = 0; s < 9; s++) {
+    const seatIdx = (heroIdx + s) % 9;
+    const posName = TABLE_SEATS[seatIdx];
+    const slot = SLOT_POSITIONS[s];
+
+    const el = document.createElement('div');
+    el.className = 'seat';
+    el.style.top = slot.top;
+    el.style.left = slot.left;
+
+    const label = posName === 'UTG+1' ? 'UTG1' : posName;
+    if (s === 0) {
+      el.classList.add('hero');
+      el.innerHTML = label + '<span class="hero-label">YOU</span>';
+    } else if (behindSet.has(posName)) {
+      el.classList.add('behind');
+      el.textContent = label;
+    } else {
+      el.classList.add('acted');
+      el.textContent = label;
+    }
+
+    table.appendChild(el);
+  }
+}
+
+// ============ CARD RENDERING ============
+
+const SUIT_COLORS = { s: '#2a2a2a', h: '#c0392b', d: '#2471a3', c: '#1e6e3e' };
+
+function renderPlayingCards(info) {
+  const container = document.getElementById('playing-cards');
+  container.innerHTML = '';
+  const cards = [
+    { rank: info.rank1, suit: info.suit1 },
+    { rank: info.rank2, suit: info.suit2 },
+  ];
+  cards.forEach(c => {
+    const sym = SUIT_SYMBOLS[c.suit];
+    const color = SUIT_COLORS[c.suit];
+    const el = document.createElement('div');
+    el.className = 'playing-card';
+    el.style.color = color;
+    el.innerHTML =
+      `<div class="card-corner"><span class="corner-rank">${c.rank}</span><span class="corner-suit">${sym}</span></div>` +
+      `<div class="card-center">${sym}</div>` +
+      `<div class="card-corner-br"><span class="corner-rank">${c.rank}</span><span class="corner-suit">${sym}</span></div>`;
+    container.appendChild(el);
+  });
+}
+
+// ============ CONFETTI ============
+
+function spawnConfetti() {
+  const container = document.getElementById('confetti-container');
+  const colors = ['#c9a96e','#e4d5a8','#3daa64','#5cb8ff','#e8c44a','#ab47bc'];
+  const count = 14;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = (25 + Math.random() * 50) + '%';
+    el.style.top = (25 + Math.random() * 25) + '%';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (0.5 + Math.random() * 0.5) + 's';
+    el.style.animationDelay = (Math.random() * 0.12) + 's';
+    el.style.animationName = 'confettiFall';
+    el.style.animationTimingFunction = 'ease-out';
+    el.style.animationFillMode = 'forwards';
+    container.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+}
+
+// ============ QUIZ LOGIC ============
+
+function nextQuestion() {
+  state.answered = false;
+
+  const posFilter = document.getElementById('quiz-position-filter').value;
+  if (posFilter === 'all') {
+    state.currentPosition = POSITIONS[Math.floor(Math.random() * POSITIONS.length)];
+  } else {
+    state.currentPosition = POSITIONS[parseInt(posFilter)];
+  }
+
+  const pos = state.currentPosition;
+
+  const inRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= pos.maxTier; });
+  const outRange = ALL_HANDS.filter(h => { const t = getTier(h); return t === 0 || t > pos.maxTier; });
+
+  if (Math.random() < 0.5 && inRange.length > 0) {
+    state.currentHand = inRange[Math.floor(Math.random() * inRange.length)];
+  } else if (outRange.length > 0) {
+    state.currentHand = outRange[Math.floor(Math.random() * outRange.length)];
+  } else {
+    state.currentHand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)];
+  }
+
+  document.getElementById('position-label').textContent = `${pos.name}（後ろに${pos.players}人）`;
+  updateTableSeats(pos.name);
+
+  const info = handDisplayInfo(state.currentHand);
+  document.getElementById('hand-name').textContent = info.name;
+  renderPlayingCards(info);
+
+  const btnRaise = document.getElementById('btn-raise');
+  const btnFold = document.getElementById('btn-fold');
+  btnRaise.disabled = false;
+  btnFold.disabled = false;
+  btnRaise.classList.remove('chosen');
+  btnFold.classList.remove('chosen');
+}
+
+function answer(isRaise) {
+  if (state.answered) return;
+  state.answered = true;
+
+  const tier = getTier(state.currentHand);
+  const maxTier = state.currentPosition.maxTier;
+  const shouldRaise = tier >= 1 && tier <= maxTier;
+  const isCorrect = isRaise === shouldRaise;
+
+  state.total++;
+  if (isCorrect) {
+    state.correct++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+  } else {
+    state.streak = 0;
+  }
+
+  updateStats();
+  saveState();
+
+  questionLog.unshift({
+    position: state.currentPosition.name,
+    hand: state.currentHand,
+    tier: tier,
+    userAnswer: isRaise ? 'RAISE' : 'FOLD',
+    correctAnswer: shouldRaise ? 'RAISE' : 'FOLD',
+    isCorrect: isCorrect,
+  });
+
+  const tierColor = TIER_COLORS[tier];
+  const tierName = tier === 0 ? 'フォールド' : `T${tier}`;
+  const correctAction = shouldRaise ? 'RAISE' : 'FOLD';
+  const lastResult = document.getElementById('last-result');
+  const cls = isCorrect ? 'correct' : 'wrong';
+  const icon = isCorrect ? '&#10004;' : '&#10008;';
+  const prevHand = state.currentHand;
+  const prevPos = state.currentPosition.name;
+  lastResult.innerHTML = `<div class="last-result-inner ${cls}">
+    <span class="lr-icon">${icon}</span>
+    <span>${prevPos}</span>
+    <span>${prevHand}</span>
+    <span class="lr-tier-badge" style="background:${tierColor}"></span>
+    <span class="lr-detail">${tierName} → ${correctAction}</span>
+  </div>`;
+
+  const screen = document.getElementById('quiz-screen');
+  screen.classList.remove('flash-correct', 'flash-wrong');
+  void screen.offsetWidth;
+  screen.classList.add(isCorrect ? 'flash-correct' : 'flash-wrong');
+
+  if (isCorrect) {
+    spawnConfetti();
+  } else {
+    const btnRow = document.querySelector('.btn-row');
+    btnRow.classList.remove('shake');
+    void btnRow.offsetWidth;
+    btnRow.classList.add('shake');
+  }
+
+  nextQuestion();
+}
+
+function updateStats() {
+  document.getElementById('correct-count').textContent = state.correct;
+  document.getElementById('total-count').textContent = state.total;
+  const pct = state.total > 0 ? Math.round(state.correct / state.total * 100) : 0;
+  document.getElementById('accuracy').textContent = state.total > 0 ? pct : '-';
+  document.getElementById('streak').textContent = state.streak;
+  document.getElementById('best-streak').textContent = state.bestStreak;
+
+  const circumference = 2 * Math.PI * 23; // ~144.51
+  const offset = circumference - (pct / 100) * circumference;
+  document.getElementById('accuracy-circle').style.strokeDashoffset = offset;
+}
+
+function resetScore() {
+  if (!confirm('スコアをリセットしますか？')) return;
+  state.correct = 0;
+  state.total = 0;
+  state.streak = 0;
+  state.bestStreak = 0;
+  updateStats();
+  saveState();
+}
+
+// ============ RANGE TABLE ============
+
+function renderRange() {
+  const grid = document.getElementById('range-grid');
+  grid.innerHTML = '';
+
+  const selVal = parseInt(document.getElementById('range-position').value);
+  const pos = selVal >= 0 ? POSITIONS[selVal] : null;
+
+  for (let r = 0; r < 13; r++) {
+    for (let c = 0; c < 13; c++) {
+      const hand = gridToHand(r, c);
+      const tier = getTier(hand);
+      const cell = document.createElement('div');
+      cell.className = 'range-cell';
+      cell.textContent = hand;
+
+      if (tier === 0) {
+        cell.classList.add('fold-cell');
+      } else {
+        cell.style.background = TIER_COLORS[tier];
+        cell.style.color = TIER_TEXT[tier];
+      }
+
+      if (pos) {
+        if (tier >= 1 && tier <= pos.maxTier) {
+          cell.classList.add('in-range');
+        } else {
+          cell.classList.add('out-of-range');
+        }
+      }
+
+      grid.appendChild(cell);
+    }
+  }
+}
+
+function buildLegend() {
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  for (let t = 1; t <= 7; t++) {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-color" style="background:${TIER_COLORS[t]}"></span>T${t}: ${TIER_NAMES[t]}`;
+    legend.appendChild(item);
+  }
+}
+
+function populatePositionSelect() {
+  const sel = document.getElementById('range-position');
+  POSITIONS.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${p.name} (${p.players}人) - T1~T${p.maxTier}`;
+    sel.appendChild(opt);
+  });
+}
+
+function populateQuizPositionFilter() {
+  const sel = document.getElementById('quiz-position-filter');
+  POSITIONS.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+// ============ LOG ============
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const filter = document.getElementById('log-filter').value;
+  const countEl = document.getElementById('log-count');
+
+  let entries = questionLog;
+  if (filter === 'wrong') entries = questionLog.filter(e => !e.isCorrect);
+  else if (filter === 'correct') entries = questionLog.filter(e => e.isCorrect);
+
+  const wrongCount = questionLog.filter(e => !e.isCorrect).length;
+  countEl.textContent = `全${questionLog.length}問（不正解: ${wrongCount}問）`;
+
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="log-empty">まだ履歴がありません</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map(e => {
+    const tierColor = TIER_COLORS[e.tier];
+    const tierLabel = e.tier === 0 ? 'Fold' : `T${e.tier}`;
+    const iconClass = e.isCorrect ? 'correct' : 'wrong';
+    const icon = e.isCorrect ? '&#10004;' : '&#10008;';
+    const ansClass = e.userAnswer === 'RAISE' ? 'raise' : 'fold';
+    return `<div class="log-entry">
+      <span class="log-icon ${iconClass}">${icon}</span>
+      <span class="log-pos">${e.position}</span>
+      <span class="log-hand">${e.hand}</span>
+      <span class="log-answer ${ansClass}">${e.userAnswer}</span>
+      <span class="log-detail"><span class="log-tier-badge" style="background:${tierColor}"></span>${tierLabel} → ${e.correctAnswer}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============ SCREEN SWITCHING ============
+
+function hideAllScreens() {
+  document.getElementById('quiz-screen').classList.remove('active');
+  document.getElementById('range-screen').classList.remove('active');
+  document.getElementById('log-screen').classList.remove('active');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+}
+
+function showRange() {
+  hideAllScreens();
+  document.getElementById('range-screen').classList.add('active');
+  document.getElementById('tab-range').classList.add('active');
+  renderRange();
+}
+
+function showLog() {
+  hideAllScreens();
+  document.getElementById('log-screen').classList.add('active');
+  document.getElementById('tab-log').classList.add('active');
+  renderLog();
+}
+
+function showQuiz() {
+  hideAllScreens();
+  document.getElementById('quiz-screen').classList.add('active');
+  document.getElementById('tab-quiz').classList.add('active');
+}
+
+// ============ KEYBOARD ============
+
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('quiz-screen').classList.contains('active')) {
+    if (e.key === 'r' || e.key === 'R') answer(true);
+    if (e.key === 'f' || e.key === 'F') answer(false);
+  }
+});
+
+// ============ INIT ============
+
+loadState();
+updateStats();
+populatePositionSelect();
+populateQuizPositionFilter();
+buildLegend();
+nextQuestion();
+</script>
+</body>
+</html>
