@@ -443,30 +443,54 @@ body::after {
 }
 .poker-table .chip {
   position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   transform: translate(-50%, -50%);
   font-family: 'JetBrains Mono', monospace;
-  font-size: 7px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 8px;
-  white-space: nowrap;
+  font-size: 6px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 3;
   line-height: 1;
+  white-space: nowrap;
+  padding: 0;
+  border: 2.5px dashed rgba(255,255,255,0.4);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.5),
+    inset 0 1px 1px rgba(255,255,255,0.15);
 }
-.poker-table .chip-blind {
-  background: rgba(201,169,110,0.25);
-  color: var(--gold-light);
-  border: 1px solid rgba(201,169,110,0.3);
+.poker-table .chip-white {
+  background: radial-gradient(circle at 35% 35%, #f5f5f5, #c8c8c8);
+  color: #333;
+  border-color: rgba(80,80,80,0.5);
 }
-.poker-table .chip-raise {
-  background: rgba(168,50,50,0.45);
-  color: #ffcccc;
-  border: 1px solid rgba(208,64,64,0.4);
+.poker-table .chip-red {
+  background: radial-gradient(circle at 35% 35%, #e03030, #8b1a1a);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
 }
-.poker-table .chip-hero {
-  background: rgba(201,169,110,0.4);
-  color: var(--gold-light);
-  border: 1px solid rgba(201,169,110,0.5);
+.poker-table .chip-green {
+  background: radial-gradient(circle at 35% 35%, #38a34a, #1a6b28);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
+.poker-table .chip-black {
+  background: radial-gradient(circle at 35% 35%, #444, #111);
+  color: #fff;
+  border-color: rgba(255,255,255,0.3);
+}
+.poker-table .chip-purple {
+  background: radial-gradient(circle at 35% 35%, #8844bb, #552288);
+  color: #fff;
+  border-color: rgba(255,255,255,0.35);
+}
+.poker-table .chip-gold {
+  background: radial-gradient(circle at 35% 35%, #d4b474, #9a7840);
+  color: #1a1200;
+  border-color: rgba(255,255,255,0.35);
 }
 .poker-table .dealer-btn {
   position: absolute;
@@ -999,6 +1023,7 @@ body::after {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
   .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
+  .poker-table .chip { width: 18px; height: 18px; font-size: 5px; border-width: 2px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
   .playing-card .card-center { font-size: 30px; }
@@ -1475,6 +1500,15 @@ function getSlotForPosition(posName, heroIdx) {
   return (seatIdx - heroIdx + 9) % 9;
 }
 
+const CHIP_COLOR_MAP = {
+  '0.5bb': 'chip-white',
+  '1bb': 'chip-red',
+  '3bb': 'chip-green',
+  '9bb': 'chip-black',
+  '27bb': 'chip-purple',
+  'call': 'chip-gold',
+};
+
 function addChip(table, slotIndex, text, type, animate) {
   table.querySelectorAll(`.chip[data-slot="${slotIndex}"]`).forEach(el => el.remove());
   const seat = SLOT_POSITIONS[slotIndex];
@@ -1484,7 +1518,9 @@ function addChip(table, slotIndex, text, type, animate) {
   const chipLeft = seatLeft + (50 - seatLeft) * 0.45;
 
   const chip = document.createElement('div');
-  chip.className = 'chip chip-' + type;
+  chip.className = 'chip';
+  const colorClass = CHIP_COLOR_MAP[text] || 'chip-white';
+  chip.classList.add(colorClass);
   if (animate) chip.classList.add('chip-animate-in');
   chip.style.top = chipTop + '%';
   chip.style.left = chipLeft + '%';
