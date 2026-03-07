@@ -1571,7 +1571,7 @@ const CHIP_STACK_MAP = {
   '9bb': 4, '27bb': 5, 'call': 3,
 };
 
-function getPositionNearFelt(slotIndex, clearancePx) {
+function getPositionNearFelt(slotIndex, clearancePx, angleOffset) {
   const seat = SLOT_POSITIONS[slotIndex];
   const seatX = parseFloat(seat.left) * 3;   // % → px in 300×180 space
   const seatY = parseFloat(seat.top) * 1.8;
@@ -1579,8 +1579,15 @@ function getPositionNearFelt(slotIndex, clearancePx) {
   const dx = cx - seatX, dy = cy - seatY;
   const dist = Math.sqrt(dx * dx + dy * dy);
   if (dist < 1) return { left: 50, top: 50 };
-  const px = seatX + (dx / dist) * clearancePx;
-  const py = seatY + (dy / dist) * clearancePx;
+  let dirX = dx / dist, dirY = dy / dist;
+  if (angleOffset) {
+    const cos = Math.cos(angleOffset), sin = Math.sin(angleOffset);
+    const rx = dirX * cos - dirY * sin;
+    const ry = dirX * sin + dirY * cos;
+    dirX = rx; dirY = ry;
+  }
+  const px = seatX + dirX * clearancePx;
+  const py = seatY + dirY * clearancePx;
   return { left: px / 3, top: py / 1.8 };
 }
 
@@ -1623,7 +1630,7 @@ function addBlindsChips(table, heroIdx) {
 function addDealerButton(table, heroIdx) {
   table.querySelectorAll('.dealer-btn').forEach(el => el.remove());
   const slotIndex = getSlotForPosition('BTN', heroIdx);
-  const pos = getPositionNearFelt(slotIndex, 35);
+  const pos = getPositionNearFelt(slotIndex, 35, -0.45);
   const el = document.createElement('div');
   el.className = 'dealer-btn';
   el.textContent = 'D';
