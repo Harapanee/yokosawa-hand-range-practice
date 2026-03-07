@@ -335,7 +335,19 @@ body {
   background: #e8e8e8;
   color: #bbb;
   border-color: #ddd;
-  opacity: 0.5;
+  opacity: 0.45;
+  transform: translate(-50%, -50%) scale(0.82);
+}
+.poker-table .seat.acted::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 110%;
+  height: 2px;
+  background: rgba(0,0,0,0.25);
+  transform: translate(-50%, -50%) rotate(-45deg);
+  border-radius: 1px;
 }
 .poker-table .seat.waiting {
   background: #ffffff;
@@ -344,15 +356,16 @@ body {
 }
 .poker-table .seat .fold-text {
   position: absolute;
-  bottom: -12px;
+  bottom: -13px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 800;
-  color: var(--text-dim);
+  color: var(--red);
   opacity: 0;
   transition: opacity 0.15s;
   white-space: nowrap;
+  letter-spacing: 0.5px;
 }
 .poker-table .seat.fold-shown .fold-text { opacity: 1; }
 .opponent-cards {
@@ -1056,6 +1069,9 @@ body {
   background: #222;
   color: #555;
   border-color: #333;
+}
+[data-theme="dark"] .poker-table .seat.acted::after {
+  background: rgba(255,255,255,0.2);
 }
 [data-theme="dark"] .poker-table .seat.waiting {
   background: #333;
