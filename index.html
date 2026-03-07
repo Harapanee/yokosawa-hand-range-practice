@@ -396,12 +396,31 @@ body {
 .equity-hero { color: var(--blue); }
 .equity-vs { color: var(--text-dim); font-size: 9px; }
 .equity-opp { color: var(--red); }
-.poker-table .chip-stack.chip-animate-in {
-  animation: chipAppear 0.25s ease-out forwards;
+.poker-table .chip-stack.chip-animate-in .chip-disc {
+  animation: chipDrop 0.2s ease-out backwards;
 }
-@keyframes chipAppear {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(1) { animation-delay: 0s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(2) { animation-delay: 0.06s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(3) { animation-delay: 0.12s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(4) { animation-delay: 0.18s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(5) { animation-delay: 0.24s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(6) { animation-delay: 0.30s; }
+.poker-table .chip-stack.chip-animate-in .chip-disc:nth-child(7) { animation-delay: 0.36s; }
+.poker-table .chip-stack.chip-animate-in .chip-label {
+  animation: chipLabelIn 0.15s ease-out backwards;
+}
+.poker-table .chip-stack.chip-animate-in[data-count="1"] .chip-label { animation-delay: 0.1s; }
+.poker-table .chip-stack.chip-animate-in[data-count="2"] .chip-label { animation-delay: 0.16s; }
+.poker-table .chip-stack.chip-animate-in[data-count="3"] .chip-label { animation-delay: 0.22s; }
+.poker-table .chip-stack.chip-animate-in[data-count="5"] .chip-label { animation-delay: 0.34s; }
+.poker-table .chip-stack.chip-animate-in[data-count="7"] .chip-label { animation-delay: 0.46s; }
+@keyframes chipDrop {
+  from { opacity: 0; transform: translateY(-10px) scale(0.6); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes chipLabelIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .poker-table .seat.opener {
   background: var(--red);
@@ -410,7 +429,7 @@ body {
   box-shadow: 0 4px 12px rgba(255,75,75,0.3);
   overflow: visible;
 }
-/* --- Chip Stack --- */
+/* --- Chip Stack (3D stacked) --- */
 .poker-table .chip-stack {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -420,49 +439,75 @@ body {
   align-items: center;
 }
 
-/* --- Chip Disc (simplified circle) --- */
+/* --- Chip Disc (stacked coin look) --- */
 .poker-table .chip-disc {
   --chip-main: #b0bec5;
   --chip-dark: #78909c;
-  width: 28px;
-  height: 28px;
+  --chip-edge: #546e7a;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   position: relative;
-  border: 2px solid var(--chip-dark);
-  background: var(--chip-main);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  border: 2.5px solid var(--chip-dark);
+  background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--chip-main), white 20%), var(--chip-main) 60%, var(--chip-dark));
+  box-shadow: 0 2px 0 var(--chip-edge), 0 3px 6px rgba(0,0,0,0.2);
+  margin-top: -16px;
+  flex-shrink: 0;
+}
+.poker-table .chip-disc:first-child {
+  margin-top: 0;
+}
+/* Inner ring detail */
+.poker-table .chip-disc::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px; right: 3px; bottom: 3px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255,255,255,0.35);
 }
 .poker-table .chip-disc::before { display: none; }
-.poker-table .chip-disc::after { display: none; }
 
 /* --- Chip Color Themes --- */
 .poker-table .chip-stack[data-type="blind"] .chip-disc {
   --chip-main: #90a4ae;
   --chip-dark: #607d8b;
+  --chip-edge: #455a64;
 }
 .poker-table .chip-stack[data-type="raise"] .chip-disc {
-  --chip-main: var(--red);
-  --chip-dark: var(--red-dark);
+  --chip-main: #ef5350;
+  --chip-dark: #c62828;
+  --chip-edge: #b71c1c;
 }
 .poker-table .chip-stack[data-type="hero"] .chip-disc {
-  --chip-main: var(--orange);
-  --chip-dark: var(--orange-dark);
+  --chip-main: #ffb300;
+  --chip-dark: #f57f17;
+  --chip-edge: #e65100;
 }
 
-/* --- Chip Label --- */
+/* --- Chip Label (below stack) --- */
 .poker-table .chip-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 7.5px;
-  font-weight: 700;
-  color: var(--text-bright);
+  font-size: 9px;
+  font-weight: 800;
+  color: #fff;
   white-space: nowrap;
   line-height: 1;
   margin-top: 2px;
-  background: rgba(255,255,255,0.9);
-  padding: 1.5px 4px;
-  border-radius: 4px;
-  letter-spacing: 0.3px;
-  border: 1px solid #e5e5e5;
+  padding: 2.5px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.poker-table .chip-stack[data-type="blind"] .chip-label {
+  background: #546e7a;
+}
+.poker-table .chip-stack[data-type="raise"] .chip-label {
+  background: #c62828;
+  box-shadow: 0 0 6px rgba(198,40,40,0.5);
+}
+.poker-table .chip-stack[data-type="hero"] .chip-label {
+  background: #e65100;
+  box-shadow: 0 0 6px rgba(230,81,0,0.5);
 }
 .poker-table .dealer-btn {
   position: absolute;
@@ -978,8 +1023,9 @@ body {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
   .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
-  .poker-table .chip-disc { width: 22px; height: 22px; }
-  .poker-table .chip-label { font-size: 6px; padding: 1px 3px; }
+  .poker-table .chip-disc { width: 20px; height: 20px; margin-top: -11px; }
+  .poker-table .chip-disc:first-child { margin-top: 0; }
+  .poker-table .chip-label { font-size: 7px; padding: 1.5px 4px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
   .playing-card .card-center { font-size: 30px; }
@@ -1477,9 +1523,19 @@ function getPositionNearFelt(slotIndex, clearancePx, angleOffset) {
   return { left: px / 3, top: py / 1.8 };
 }
 
+function getChipCount(text) {
+  const val = parseFloat(text);
+  if (isNaN(val) || val <= 0.5) return 1;
+  if (val <= 1) return 1;
+  if (val <= 3) return 3;
+  if (val <= 9) return 5;
+  return 7;
+}
+
 function addChip(table, slotIndex, text, type, animate) {
   table.querySelectorAll(`.chip-stack[data-slot="${slotIndex}"]`).forEach(el => el.remove());
   const pos = getPositionNearFelt(slotIndex, 38);
+  const count = getChipCount(text);
 
   const stack = document.createElement('div');
   stack.className = 'chip-stack';
@@ -1488,9 +1544,14 @@ function addChip(table, slotIndex, text, type, animate) {
   stack.style.left = pos.left + '%';
   stack.dataset.slot = slotIndex;
   stack.dataset.type = type || 'blind';
-  const disc = document.createElement('div');
-  disc.className = 'chip-disc';
-  stack.appendChild(disc);
+  stack.dataset.count = count;
+
+  for (let i = 0; i < count; i++) {
+    const disc = document.createElement('div');
+    disc.className = 'chip-disc';
+    stack.appendChild(disc);
+  }
+
   const label = document.createElement('div');
   label.className = 'chip-label';
   label.textContent = text;
