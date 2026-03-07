@@ -346,6 +346,23 @@ body::after {
   color: #ffaaaa;
   border-color: rgba(208,64,64,0.5);
   box-shadow: 0 0 12px rgba(208,64,64,0.3);
+  overflow: visible;
+}
+.poker-table .opener-label {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 7px;
+  color: #ffaaaa;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(168,50,50,0.85);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  border: 1px solid rgba(208,64,64,0.3);
 }
 .poker-table .hero-label {
   position: absolute;
@@ -1371,8 +1388,9 @@ function nextQuestionVsOpen() {
     state.currentHand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)];
   }
 
+  const behindCount = ACTION_ORDER.length - 1 - ACTION_ORDER.indexOf(hero.name);
   document.getElementById('position-label').innerHTML =
-    `あなた: <strong>${hero.name}</strong> ← ${opener.name}のオープン`;
+    `あなた: <strong>${hero.name}</strong> ← ${opener.name}のオープン（後ろに${behindCount}人）`;
   updateTableSeatsVsOpen(opener.name, hero.name);
   renderHand();
 }
@@ -1429,6 +1447,13 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
   table.querySelectorAll('.seat').forEach(el => el.remove());
 
   const heroIdx = TABLE_SEATS.indexOf(heroName);
+  const heroActIdx = ACTION_ORDER.indexOf(heroName);
+  const behindSet = new Set();
+  for (let i = heroActIdx + 1; i < ACTION_ORDER.length; i++) {
+    if (ACTION_ORDER[i] !== threeBettorName) {
+      behindSet.add(ACTION_ORDER[i]);
+    }
+  }
 
   for (let s = 0; s < 9; s++) {
     const seatIdx = (heroIdx + s) % 9;
@@ -1446,6 +1471,9 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
       el.innerHTML = label + '<span class="hero-label">YOU</span>';
     } else if (posName === threeBettorName) {
       el.classList.add('opener');
+      el.innerHTML = label + '<span class="opener-label">3bet</span>';
+    } else if (behindSet.has(posName)) {
+      el.classList.add('behind');
       el.textContent = label;
     } else {
       el.classList.add('acted');
@@ -1461,6 +1489,11 @@ function updateTableSeatsVsOpen(openerName, heroName) {
   table.querySelectorAll('.seat').forEach(el => el.remove());
 
   const heroIdx = TABLE_SEATS.indexOf(heroName);
+  const heroActIdx = ACTION_ORDER.indexOf(heroName);
+  const behindSet = new Set();
+  for (let i = heroActIdx + 1; i < ACTION_ORDER.length; i++) {
+    behindSet.add(ACTION_ORDER[i]);
+  }
 
   for (let s = 0; s < 9; s++) {
     const seatIdx = (heroIdx + s) % 9;
@@ -1478,6 +1511,9 @@ function updateTableSeatsVsOpen(openerName, heroName) {
       el.innerHTML = label + '<span class="hero-label">YOU</span>';
     } else if (posName === openerName) {
       el.classList.add('opener');
+      el.innerHTML = label + '<span class="opener-label">3bb</span>';
+    } else if (behindSet.has(posName)) {
+      el.classList.add('behind');
       el.textContent = label;
     } else {
       el.classList.add('acted');
