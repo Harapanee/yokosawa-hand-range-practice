@@ -195,10 +195,10 @@ body {
   font-weight: 700;
 }
 .stat-card.accent {
-  border-color: rgba(255,150,0,0.3);
-  background: rgba(255,150,0,0.06);
+  border-color: var(--bg-card-border);
+  background: var(--bg-card);
 }
-.stat-card.accent .stat-value { color: var(--orange); }
+.stat-card.accent .stat-value { color: var(--text-bright); }
 
 /* Accuracy ring */
 .accuracy-ring-wrap {
@@ -223,7 +223,7 @@ body {
   stroke-width: 3.5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-  filter: drop-shadow(0 0 4px rgba(88,204,2,0.3));
+  filter: none;
 }
 .accuracy-ring-wrap .ring-text {
   position: absolute;
@@ -314,17 +314,17 @@ body {
   color: #fff;
   border-color: var(--green-dark);
   box-shadow:
-    0 4px 12px rgba(88,204,2,0.35),
-    0 0 0 3px rgba(88,204,2,0.15);
+    0 3px 8px rgba(88,204,2,0.25),
+    0 0 0 2px rgba(88,204,2,0.1);
   z-index: 2;
   width: 46px;
   height: 46px;
   font-size: 10px;
-  animation: heroPulse 3s ease-in-out infinite;
+  animation: heroPulse 4s ease-in-out infinite;
 }
 @keyframes heroPulse {
-  0%, 100% { box-shadow: 0 4px 12px rgba(88,204,2,0.35), 0 0 0 3px rgba(88,204,2,0.15); }
-  50% { box-shadow: 0 4px 16px rgba(88,204,2,0.5), 0 0 0 5px rgba(88,204,2,0.1); }
+  0%, 100% { box-shadow: 0 3px 8px rgba(88,204,2,0.25), 0 0 0 2px rgba(88,204,2,0.1); }
+  50% { box-shadow: 0 3px 10px rgba(88,204,2,0.3), 0 0 0 3px rgba(88,204,2,0.08); }
 }
 .poker-table .seat.behind {
   background: #f0f0f0;
@@ -349,7 +349,7 @@ body {
   transform: translateX(-50%);
   font-size: 7px;
   font-weight: 800;
-  color: var(--red);
+  color: var(--text-dim);
   opacity: 0;
   transition: opacity 0.15s;
   white-space: nowrap;
@@ -445,10 +445,10 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .poker-table .seat.opener {
-  background: var(--red);
-  color: #fff;
-  border-color: var(--red-dark);
-  box-shadow: 0 4px 12px rgba(255,75,75,0.3);
+  background: var(--surface);
+  color: var(--text-bright);
+  border-color: var(--red);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
   overflow: visible;
 }
 /* --- Chip Stack (3D stacked) --- */
@@ -461,75 +461,33 @@ body {
   align-items: center;
 }
 
-/* --- Chip Disc (stacked coin look) --- */
+/* --- Chip Disc (hidden - simplified to label only) --- */
 .poker-table .chip-disc {
-  --chip-main: #b0bec5;
-  --chip-dark: #78909c;
-  --chip-edge: #546e7a;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  position: relative;
-  border: 2.5px solid var(--chip-dark);
-  background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--chip-main), white 20%), var(--chip-main) 60%, var(--chip-dark));
-  box-shadow: 0 2px 0 var(--chip-edge), 0 3px 6px rgba(0,0,0,0.2);
-  margin-top: -20px;
-  flex-shrink: 0;
-}
-.poker-table .chip-disc:first-child {
-  margin-top: 0;
-}
-/* Inner ring detail */
-.poker-table .chip-disc::after {
-  content: '';
-  position: absolute;
-  top: 3px; left: 3px; right: 3px; bottom: 3px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(255,255,255,0.35);
-}
-.poker-table .chip-disc::before { display: none; }
-
-/* --- Chip Color Themes --- */
-.poker-table .chip-stack[data-type="blind"] .chip-disc {
-  --chip-main: #90a4ae;
-  --chip-dark: #607d8b;
-  --chip-edge: #455a64;
-}
-.poker-table .chip-stack[data-type="raise"] .chip-disc {
-  --chip-main: #ef5350;
-  --chip-dark: #c62828;
-  --chip-edge: #b71c1c;
-}
-.poker-table .chip-stack[data-type="hero"] .chip-disc {
-  --chip-main: #ffb300;
-  --chip-dark: #f57f17;
-  --chip-edge: #e65100;
+  display: none;
 }
 
-/* --- Chip Label (below stack) --- */
+/* --- Chip Label (simple text) --- */
 .poker-table .chip-label {
   font-family: 'JetBrains Mono', monospace;
   font-size: 9px;
-  font-weight: 800;
-  color: #fff;
+  font-weight: 700;
   white-space: nowrap;
   line-height: 1;
-  margin-top: 2px;
   padding: 2.5px 7px;
   border-radius: 6px;
   letter-spacing: 0.5px;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 .poker-table .chip-stack[data-type="blind"] .chip-label {
-  background: #546e7a;
+  background: var(--surface);
+  color: var(--text-dim);
 }
 .poker-table .chip-stack[data-type="raise"] .chip-label {
-  background: #c62828;
-  box-shadow: 0 0 6px rgba(198,40,40,0.5);
+  background: rgba(255,75,75,0.12);
+  color: var(--red);
 }
 .poker-table .chip-stack[data-type="hero"] .chip-label {
-  background: #e65100;
-  box-shadow: 0 0 6px rgba(230,81,0,0.5);
+  background: rgba(88,204,2,0.12);
+  color: var(--green);
 }
 .poker-table .dealer-btn {
   position: absolute;
@@ -537,7 +495,7 @@ body {
   height: 20px;
   border-radius: 50%;
   background: #ffffff;
-  color: var(--text-bright);
+  color: var(--text-dim);
   font-family: 'Nunito', sans-serif;
   font-size: 9px;
   font-weight: 900;
@@ -546,8 +504,8 @@ body {
   justify-content: center;
   transform: translate(-50%, -50%);
   z-index: 4;
-  border: 2px solid var(--green);
-  box-shadow: 0 2px 6px rgba(88,204,2,0.25);
+  border: 2px solid var(--bg-card-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   letter-spacing: 0;
   line-height: 1;
 }
@@ -831,6 +789,7 @@ body {
   margin-top: 4px;
   letter-spacing: 1px;
   font-weight: 600;
+  opacity: 0.5;
 }
 
 /* ===== RANGE TABLE SCREEN ===== */
@@ -1045,8 +1004,6 @@ body {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
   .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
-  .poker-table .chip-disc { width: 20px; height: 20px; margin-top: -15px; }
-  .poker-table .chip-disc:first-child { margin-top: 0; }
   .poker-table .chip-label { font-size: 7px; padding: 1.5px 4px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
