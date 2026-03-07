@@ -1551,8 +1551,15 @@ function addDealerButton(table, heroIdx) {
   const seat = SLOT_POSITIONS[slotIndex];
   const seatTop = parseFloat(seat.top);
   const seatLeft = parseFloat(seat.left);
-  const btnTop = seatTop + (50 - seatTop) * 0.35;
-  const btnLeft = seatLeft + (50 - seatLeft) * 0.35;
+  // Fixed pixel distance toward center, normalized for table aspect ratio (300x180)
+  const dx = 50 - seatLeft;
+  const dy = 50 - seatTop;
+  const dxPx = dx * 3;
+  const dyPx = dy * 1.8;
+  const dist = Math.sqrt(dxPx * dxPx + dyPx * dyPx);
+  const target = 22;
+  const btnTop = seatTop + (dyPx / dist * target) / 1.8;
+  const btnLeft = seatLeft + (dxPx / dist * target) / 3;
   const el = document.createElement('div');
   el.className = 'dealer-btn';
   el.textContent = 'D';
