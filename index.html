@@ -449,31 +449,29 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-}
-.poker-table .chip-stack.chip-stack-bottom {
-  flex-direction: column-reverse;
 }
 
-/* --- Chip Disc Base --- */
+/* --- Chip Disc (top-down circle) --- */
 .poker-table .chip-disc {
   --chip-main: #b8b0a0;
   --chip-dark: #8a8070;
   --chip-light: #e8e0d0;
   --chip-stripe: rgba(255,255,255,0.45);
-  width: 24px;
-  height: 8px;
+  --chip-text: #fff;
+  --chip-glow: rgba(180,170,160,0.4);
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   position: relative;
-  margin-top: -3px;
   border: none;
   background:
-    radial-gradient(ellipse at 30% 30%, var(--chip-light) 0%, var(--chip-main) 50%, var(--chip-dark) 100%);
+    radial-gradient(circle at 35% 30%, var(--chip-light) 0%, var(--chip-main) 50%, var(--chip-dark) 100%);
   box-shadow:
-    0 2px 3px rgba(0,0,0,0.45),
-    0 1px 1px rgba(0,0,0,0.3),
-    inset 0 1px 1px rgba(255,255,255,0.35),
-    inset 0 -1px 1px rgba(0,0,0,0.2);
+    0 2px 6px rgba(0,0,0,0.5),
+    0 1px 2px rgba(0,0,0,0.3),
+    inset 0 1px 2px rgba(255,255,255,0.3),
+    inset 0 -1px 2px rgba(0,0,0,0.25),
+    0 0 8px var(--chip-glow);
 }
 /* Edge stripe markings */
 .poker-table .chip-disc::before {
@@ -483,37 +481,23 @@ body::after {
   border-radius: 50%;
   background:
     repeating-conic-gradient(
-      var(--chip-stripe) 0deg 8deg,
-      transparent 8deg 22deg
+      var(--chip-stripe) 0deg 10deg,
+      transparent 10deg 25deg
     );
-  mask: radial-gradient(ellipse 60% 40% at center, transparent 60%, black 62%);
-  -webkit-mask: radial-gradient(ellipse 60% 40% at center, transparent 60%, black 62%);
-  opacity: 0.6;
+  mask: radial-gradient(circle at center, transparent 65%, black 70%);
+  -webkit-mask: radial-gradient(circle at center, transparent 65%, black 70%);
+  opacity: 0.7;
 }
-/* Top shine */
+/* Inner ring + shine */
 .poker-table .chip-disc::after {
   content: '';
   position: absolute;
-  inset: 2px 4px;
+  inset: 5px;
   border-radius: 50%;
-  background: radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.25) 0%, transparent 65%);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.3) 0%, transparent 60%);
   pointer-events: none;
 }
-.poker-table .chip-disc:first-child {
-  margin-top: 0;
-}
-
-/* Stacking brightness (top-lit) */
-.poker-table .chip-disc:nth-child(1) { filter: brightness(1.08); }
-.poker-table .chip-disc:nth-child(2) { filter: brightness(1.02); }
-.poker-table .chip-disc:nth-child(3) { filter: brightness(0.96); }
-.poker-table .chip-disc:nth-child(4) { filter: brightness(0.90); }
-.poker-table .chip-disc:nth-child(5) { filter: brightness(0.84); }
-.poker-table .chip-stack-bottom .chip-disc:nth-child(1) { filter: brightness(0.84); }
-.poker-table .chip-stack-bottom .chip-disc:nth-child(2) { filter: brightness(0.90); }
-.poker-table .chip-stack-bottom .chip-disc:nth-child(3) { filter: brightness(0.96); }
-.poker-table .chip-stack-bottom .chip-disc:nth-child(4) { filter: brightness(1.02); }
-.poker-table .chip-stack-bottom .chip-disc:nth-child(5) { filter: brightness(1.08); }
 
 /* --- Chip Color Themes --- */
 /* Blind chips: muted slate blue */
@@ -521,21 +505,24 @@ body::after {
   --chip-main: #5c6b80;
   --chip-dark: #3a4555;
   --chip-light: #8899aa;
-  --chip-stripe: rgba(200,220,240,0.4);
+  --chip-stripe: rgba(200,220,240,0.45);
+  --chip-glow: rgba(100,140,180,0.35);
 }
 /* Raise chips: crimson */
 .poker-table .chip-stack[data-type="raise"] .chip-disc {
   --chip-main: #b03040;
   --chip-dark: #781828;
   --chip-light: #e05060;
-  --chip-stripe: rgba(255,200,200,0.45);
+  --chip-stripe: rgba(255,200,200,0.5);
+  --chip-glow: rgba(200,60,80,0.35);
 }
 /* Hero chips: gold/amber */
 .poker-table .chip-stack[data-type="hero"] .chip-disc {
   --chip-main: #c49a40;
   --chip-dark: #8a6a20;
   --chip-light: #e8c060;
-  --chip-stripe: rgba(255,240,180,0.5);
+  --chip-stripe: rgba(255,240,180,0.55);
+  --chip-glow: rgba(200,160,60,0.35);
 }
 
 /* --- Chip Label --- */
@@ -1087,8 +1074,8 @@ body::after {
   .poker-table { width: 260px; height: 156px; }
   .poker-table .seat { width: 34px; height: 34px; font-size: 8px; }
   .poker-table .dealer-btn { width: 16px; height: 16px; font-size: 7px; }
-  .poker-table .chip-disc { width: 20px; height: 6px; margin-top: -2px; }
-  .poker-table .chip-disc:first-child { margin-top: 0; }
+  .poker-table .chip-disc { width: 26px; height: 26px; }
+  .poker-table .chip-disc::after { inset: 4px; }
   .poker-table .chip-label { font-size: 6px; padding: 1px 3px; }
   .poker-table .seat.hero { width: 40px; height: 40px; font-size: 9px; }
   .playing-card { width: 70px; height: 100px; }
@@ -1566,10 +1553,6 @@ function getSlotForPosition(posName, heroIdx) {
   return (seatIdx - heroIdx + 9) % 9;
 }
 
-const CHIP_STACK_MAP = {
-  '0.5bb': 1, '1bb': 2, '3bb': 3,
-  '9bb': 4, '27bb': 5, 'call': 3,
-};
 
 function getPositionNearFelt(slotIndex, clearancePx, angleOffset) {
   const seat = SLOT_POSITIONS[slotIndex];
@@ -1594,22 +1577,17 @@ function getPositionNearFelt(slotIndex, clearancePx, angleOffset) {
 function addChip(table, slotIndex, text, type, animate) {
   table.querySelectorAll(`.chip-stack[data-slot="${slotIndex}"]`).forEach(el => el.remove());
   const pos = getPositionNearFelt(slotIndex, 38);
-  const isBottom = parseFloat(SLOT_POSITIONS[slotIndex].top) > 50;
 
-  const count = CHIP_STACK_MAP[text] || 1;
   const stack = document.createElement('div');
   stack.className = 'chip-stack';
-  if (isBottom) stack.classList.add('chip-stack-bottom');
   if (animate) stack.classList.add('chip-animate-in');
   stack.style.top = pos.top + '%';
   stack.style.left = pos.left + '%';
   stack.dataset.slot = slotIndex;
   stack.dataset.type = type || 'blind';
-  for (let i = 0; i < count; i++) {
-    const disc = document.createElement('div');
-    disc.className = 'chip-disc';
-    stack.appendChild(disc);
-  }
+  const disc = document.createElement('div');
+  disc.className = 'chip-disc';
+  stack.appendChild(disc);
   const label = document.createElement('div');
   label.className = 'chip-label';
   label.textContent = text;
