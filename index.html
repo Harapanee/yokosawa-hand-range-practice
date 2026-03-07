@@ -1884,6 +1884,11 @@ function updateButtons() {
       '<button class="btn btn-3bet" onclick="answer(\'3BET\')">3BET</button>' +
       '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
       '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
+  } else if (scenario === 'vs-3bet') {
+    row.innerHTML =
+      '<button class="btn btn-3bet" onclick="answer(\'4BET\')">4BET</button>' +
+      '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
+      '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
   }
 }
 
@@ -2212,6 +2217,10 @@ document.addEventListener('keydown', (e) => {
     if (key === 'F') answer('FOLD');
   } else if (scenario === 'vs-open') {
     if (key === '3') answer('3BET');
+    if (key === 'C') answer('CALL');
+    if (key === 'F') answer('FOLD');
+  } else if (scenario === 'vs-3bet') {
+    if (key === '4') answer('4BET');
     if (key === 'C') answer('CALL');
     if (key === 'F') answer('FOLD');
   }
