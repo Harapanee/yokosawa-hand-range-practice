@@ -855,6 +855,7 @@ body::after {
   letter-spacing: 0.5px;
 }
 .log-answer.raise { background: rgba(45,138,78,0.2); color: var(--green-bright); }
+.log-answer.call { background: rgba(21,101,192,0.2); color: #42a5f5; }
 .log-answer.fold { background: rgba(168,50,50,0.2); color: var(--red-bright); }
 .log-count {
   font-size: 11px;
@@ -1326,7 +1327,7 @@ function nextQuestionOpen() {
   if (posFilter === 'all') {
     state.currentPosition = OPENER_POSITIONS[Math.floor(Math.random() * OPENER_POSITIONS.length)];
   } else {
-    state.currentPosition = POSITIONS[parseInt(posFilter)];
+    state.currentPosition = OPENER_POSITIONS[parseInt(posFilter)];
   }
   state.openerPosition = null;
 
@@ -1734,7 +1735,8 @@ function renderLog() {
     const tierLabel = e.tier === 0 ? 'Fold' : 'T' + e.tier;
     const iconClass = e.isCorrect ? 'correct' : 'wrong';
     const icon = e.isCorrect ? '&#10004;' : '&#10008;';
-    const ansClass = e.userAnswer === 'FOLD' ? 'fold' : 'raise';
+    const ansClass = e.userAnswer === 'FOLD' ? 'fold'
+      : e.userAnswer === 'CALL' ? 'call' : 'raise';
     const posText = e.openerPosition
       ? e.position + ' vs ' + e.openerPosition
       : e.position;
