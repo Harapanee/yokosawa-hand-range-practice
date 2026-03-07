@@ -77,7 +77,7 @@ When user correctly RAISEs in open scenario, `tryChainTo3bet()` has 40% chance t
 2. **Range table screen** (`#range-screen`) — 13x13 grid colored by tier. Position select uses `<optgroup>`: open-raise views + vs-open BB views. 3BET hands get orange outline, CALL hands get gold outline.
 3. **Log screen** (`#log-screen`) — Scrollable answer history with filter (all/wrong only/correct only), newest first. Each entry shows scenario badge, position, hand, user answer, and correct answer.
 
-Quiz screen has a position filter dropdown (`populateQuizPositionFilter`) to restrict which positions appear. Confetti animation fires on milestone streaks.
+Quiz screen has a position filter dropdown (`populateQuizPositionFilter`) to restrict which positions appear (open scenario only; hidden for vs-open/vs-3bet).
 
 ### Navigation
 
