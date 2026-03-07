@@ -90,6 +90,7 @@ body::after {
 }
 .tab-bar.hidden {
   transform: translateY(100%);
+  pointer-events: none;
 }
 .tab-bar-inner {
   display: flex;
@@ -2422,17 +2423,24 @@ document.addEventListener('keydown', (e) => {
 // ============ TAB BAR AUTO-HIDE ============
 
 {
-  let lastScrollY = 0;
   const tabBar = document.querySelector('.tab-bar');
-  window.addEventListener('scroll', () => {
-    const y = window.scrollY;
-    if (y > lastScrollY && y > 30) {
-      tabBar.classList.add('hidden');
-    } else {
-      tabBar.classList.remove('hidden');
+  let hideTimer = null;
+  const isMobile = () => window.innerWidth <= 768;
+
+  function showTabBar() {
+    tabBar.classList.remove('hidden');
+    clearTimeout(hideTimer);
+    if (isMobile()) {
+      hideTimer = setTimeout(() => tabBar.classList.add('hidden'), 3000);
     }
-    lastScrollY = y;
-  }, { passive: true });
+  }
+
+  window.addEventListener('scroll', showTabBar, { passive: true });
+  window.addEventListener('touchstart', showTabBar, { passive: true });
+
+  if (isMobile()) {
+    hideTimer = setTimeout(() => tabBar.classList.add('hidden'), 3000);
+  }
 }
 
 // ============ SCENARIO CHANGE ============
