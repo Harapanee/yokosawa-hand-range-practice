@@ -922,9 +922,9 @@ body::after {
   <div class="hand-label" id="hand-name"></div>
   <div class="playing-cards" id="playing-cards"></div>
 
-  <div class="btn-row">
-    <button class="btn btn-raise" id="btn-raise" onclick="answer(true)">RAISE</button>
-    <button class="btn btn-fold" id="btn-fold" onclick="answer(false)">FOLD</button>
+  <div class="btn-row" id="btn-row">
+    <button class="btn btn-raise" onclick="answer('RAISE')">RAISE</button>
+    <button class="btn btn-fold" onclick="answer('FOLD')">FOLD</button>
   </div>
 
   <div class="last-result" id="last-result"></div>
@@ -1123,6 +1123,9 @@ let state = {
   currentHand: null,
   currentPosition: null,
   answered: false,
+  scenario: 'open',
+  openerPosition: null,
+  threeBettorPosition: null,
 };
 
 function loadState() {
@@ -1147,6 +1150,49 @@ function saveState() {
       bestStreak: state.bestStreak,
     }));
   } catch(e) {}
+}
+
+// ============ HELPERS ============
+
+const OPENER_POSITIONS = POSITIONS.filter(p => !p.heroOnly);
+
+function getHeroPositionsBehind(openerName) {
+  const opIdx = ACTION_ORDER.indexOf(openerName);
+  return ACTION_ORDER.slice(opIdx + 1).map(name =>
+    POSITIONS.find(p => p.name === name)
+  ).filter(Boolean);
+}
+
+function getCorrectAnswer(scenario, hand, heroPos, openerPos) {
+  const tier = getTier(hand);
+  if (tier === 0) return 'FOLD';
+
+  if (scenario === 'open') {
+    return tier <= heroPos.maxTier ? 'RAISE' : 'FOLD';
+  }
+
+  if (scenario === 'vs-open') {
+    const openerMax = openerPos.maxTier;
+    if (heroPos.name === 'BB') {
+      const threeBetThresh = openerMax - 2;
+      if (tier <= threeBetThresh) return '3BET';
+      const callMax = openerPos.name === 'BTN' ? 8 : 6;
+      if (tier <= callMax) return 'CALL';
+      return 'FOLD';
+    }
+    if (tier <= openerMax - 2) return '3BET';
+    if (tier === openerMax - 1) return 'CALL';
+    return 'FOLD';
+  }
+
+  if (scenario === 'vs-3bet') {
+    const heroMax = heroPos.maxTier;
+    if (tier <= heroMax - 3) return '4BET';
+    if (tier === heroMax - 2) return 'CALL';
+    return 'FOLD';
+  }
+
+  return 'FOLD';
 }
 
 // ============ TABLE VISUAL ============
@@ -1255,16 +1301,30 @@ function spawnConfetti() {
 
 function nextQuestion() {
   state.answered = false;
+  const scenario = document.getElementById('quiz-scenario').value;
+  state.scenario = scenario;
 
+  if (scenario === 'open') {
+    nextQuestionOpen();
+  } else if (scenario === 'vs-open') {
+    nextQuestionVsOpen();
+  } else if (scenario === 'vs-3bet') {
+    nextQuestionVs3bet();
+  }
+
+  updateButtons();
+}
+
+function nextQuestionOpen() {
   const posFilter = document.getElementById('quiz-position-filter').value;
   if (posFilter === 'all') {
-    state.currentPosition = POSITIONS[Math.floor(Math.random() * POSITIONS.length)];
+    state.currentPosition = OPENER_POSITIONS[Math.floor(Math.random() * OPENER_POSITIONS.length)];
   } else {
     state.currentPosition = POSITIONS[parseInt(posFilter)];
   }
+  state.openerPosition = null;
 
   const pos = state.currentPosition;
-
   const inRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= pos.maxTier; });
   const outRange = ALL_HANDS.filter(h => { const t = getTier(h); return t === 0 || t > pos.maxTier; });
 
@@ -1278,27 +1338,114 @@ function nextQuestion() {
 
   document.getElementById('position-label').textContent = `${pos.name}（後ろに${pos.players}人）`;
   updateTableSeats(pos.name);
+  renderHand();
+}
 
+function nextQuestionVsOpen() {
+  const opener = OPENER_POSITIONS[Math.floor(Math.random() * OPENER_POSITIONS.length)];
+  state.openerPosition = opener;
+
+  const heroCandidates = getHeroPositionsBehind(opener.name);
+  const hero = heroCandidates[Math.floor(Math.random() * heroCandidates.length)];
+  state.currentPosition = hero;
+
+  const allAnswers = ALL_HANDS.map(h => ({
+    hand: h,
+    answer: getCorrectAnswer('vs-open', h, hero, opener)
+  }));
+  const actionable = allAnswers.filter(a => a.answer !== 'FOLD');
+  const foldable = allAnswers.filter(a => a.answer === 'FOLD');
+
+  if (Math.random() < 0.5 && actionable.length > 0) {
+    state.currentHand = actionable[Math.floor(Math.random() * actionable.length)].hand;
+  } else if (foldable.length > 0) {
+    state.currentHand = foldable[Math.floor(Math.random() * foldable.length)].hand;
+  } else {
+    state.currentHand = ALL_HANDS[Math.floor(Math.random() * ALL_HANDS.length)];
+  }
+
+  document.getElementById('position-label').innerHTML =
+    `あなた: <strong>${hero.name}</strong> ← ${opener.name}のオープン`;
+  updateTableSeatsVsOpen(opener.name, hero.name);
+  renderHand();
+}
+
+function nextQuestionVs3bet() {
+  // Stub — will be implemented in Task 5
+  nextQuestionOpen();
+}
+
+function renderHand() {
   const info = handDisplayInfo(state.currentHand);
   document.getElementById('hand-name').textContent = info.name;
   renderPlayingCards(info);
-
-  const btnRaise = document.getElementById('btn-raise');
-  const btnFold = document.getElementById('btn-fold');
-  btnRaise.disabled = false;
-  btnFold.disabled = false;
-  btnRaise.classList.remove('chosen');
-  btnFold.classList.remove('chosen');
 }
 
-function answer(isRaise) {
+function updateTableSeatsVsOpen(openerName, heroName) {
+  const table = document.getElementById('poker-table');
+  table.querySelectorAll('.seat').forEach(el => el.remove());
+
+  const heroIdx = TABLE_SEATS.indexOf(heroName);
+
+  for (let s = 0; s < 9; s++) {
+    const seatIdx = (heroIdx + s) % 9;
+    const posName = TABLE_SEATS[seatIdx];
+    const slot = SLOT_POSITIONS[s];
+
+    const el = document.createElement('div');
+    el.className = 'seat';
+    el.style.top = slot.top;
+    el.style.left = slot.left;
+
+    const label = posName === 'UTG+1' ? 'UTG1' : posName;
+    if (s === 0) {
+      el.classList.add('hero');
+      el.innerHTML = label + '<span class="hero-label">YOU</span>';
+    } else if (posName === openerName) {
+      el.style.background = 'rgba(168,50,50,0.75)';
+      el.style.color = '#ffaaaa';
+      el.style.borderColor = 'rgba(208,64,64,0.5)';
+      el.style.boxShadow = '0 0 12px rgba(208,64,64,0.3)';
+      el.textContent = label;
+    } else {
+      el.classList.add('acted');
+      el.textContent = label;
+    }
+
+    table.appendChild(el);
+  }
+}
+
+function updateButtons() {
+  const row = document.getElementById('btn-row');
+  const scenario = state.scenario || 'open';
+
+  if (scenario === 'open') {
+    row.innerHTML =
+      '<button class="btn btn-raise" onclick="answer(\'RAISE\')">RAISE</button>' +
+      '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
+  } else if (scenario === 'vs-open') {
+    row.innerHTML =
+      '<button class="btn btn-3bet" onclick="answer(\'3BET\')">3BET</button>' +
+      '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
+      '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
+  } else if (scenario === 'vs-3bet') {
+    row.innerHTML =
+      '<button class="btn btn-3bet" onclick="answer(\'4BET\')">4BET</button>' +
+      '<button class="btn btn-call" onclick="answer(\'CALL\')">CALL</button>' +
+      '<button class="btn btn-fold" onclick="answer(\'FOLD\')">FOLD</button>';
+  }
+}
+
+function answer(userAction) {
   if (state.answered) return;
   state.answered = true;
 
-  const tier = getTier(state.currentHand);
-  const maxTier = state.currentPosition.maxTier;
-  const shouldRaise = tier >= 1 && tier <= maxTier;
-  const isCorrect = isRaise === shouldRaise;
+  const scenario = state.scenario || 'open';
+  const hand = state.currentHand;
+  const tier = getTier(hand);
+  const correctAction = getCorrectAnswer(scenario, hand, state.currentPosition, state.openerPosition);
+  const isCorrect = userAction === correctAction;
 
   state.total++;
   if (isCorrect) {
@@ -1313,26 +1460,28 @@ function answer(isRaise) {
   saveState();
 
   questionLog.unshift({
+    scenario: scenario,
     position: state.currentPosition.name,
-    hand: state.currentHand,
+    openerPosition: state.openerPosition ? state.openerPosition.name : null,
+    hand: hand,
     tier: tier,
-    userAnswer: isRaise ? 'RAISE' : 'FOLD',
-    correctAnswer: shouldRaise ? 'RAISE' : 'FOLD',
+    userAnswer: userAction,
+    correctAnswer: correctAction,
     isCorrect: isCorrect,
   });
 
-  const tierColor = TIER_COLORS[tier];
+  const tierColor = TIER_COLORS[tier] || TIER_COLORS[0];
   const tierName = tier === 0 ? 'フォールド' : `T${tier}`;
-  const correctAction = shouldRaise ? 'RAISE' : 'FOLD';
   const lastResult = document.getElementById('last-result');
   const cls = isCorrect ? 'correct' : 'wrong';
   const icon = isCorrect ? '&#10004;' : '&#10008;';
-  const prevHand = state.currentHand;
-  const prevPos = state.currentPosition.name;
+  const posInfo = state.openerPosition
+    ? `${state.currentPosition.name} vs ${state.openerPosition.name}`
+    : state.currentPosition.name;
   lastResult.innerHTML = `<div class="last-result-inner ${cls}">
     <span class="lr-icon">${icon}</span>
-    <span>${prevPos}</span>
-    <span>${prevHand}</span>
+    <span>${posInfo}</span>
+    <span>${hand}</span>
     <span class="lr-tier-badge" style="background:${tierColor}"></span>
     <span class="lr-detail">${tierName} → ${correctAction}</span>
   </div>`;
@@ -1345,7 +1494,7 @@ function answer(isRaise) {
   if (isCorrect) {
     spawnConfetti();
   } else {
-    const btnRow = document.querySelector('.btn-row');
+    const btnRow = document.getElementById('btn-row');
     btnRow.classList.remove('shake');
     void btnRow.offsetWidth;
     btnRow.classList.add('shake');
@@ -1512,11 +1661,38 @@ function showQuiz() {
 // ============ KEYBOARD ============
 
 document.addEventListener('keydown', (e) => {
-  if (document.getElementById('quiz-screen').classList.contains('active')) {
-    if (e.key === 'r' || e.key === 'R') answer(true);
-    if (e.key === 'f' || e.key === 'F') answer(false);
+  if (!document.getElementById('quiz-screen').classList.contains('active')) return;
+  const scenario = state.scenario || 'open';
+  const key = e.key.toUpperCase();
+
+  if (scenario === 'open') {
+    if (key === 'R') answer('RAISE');
+    if (key === 'F') answer('FOLD');
+  } else if (scenario === 'vs-open') {
+    if (key === '3') answer('3BET');
+    if (key === 'C') answer('CALL');
+    if (key === 'F') answer('FOLD');
+  } else if (scenario === 'vs-3bet') {
+    if (key === '4') answer('4BET');
+    if (key === 'C') answer('CALL');
+    if (key === 'F') answer('FOLD');
   }
 });
+
+// ============ SCENARIO CHANGE ============
+
+function onScenarioChange() {
+  const scenario = document.getElementById('quiz-scenario').value;
+  const hint = document.querySelector('.kb-hint');
+  if (scenario === 'open') {
+    hint.textContent = 'R / F キー対応';
+  } else if (scenario === 'vs-open') {
+    hint.textContent = '3 / C / F キー対応';
+  } else if (scenario === 'vs-3bet') {
+    hint.textContent = '4 / C / F キー対応';
+  }
+  nextQuestion();
+}
 
 // ============ INIT ============
 
