@@ -1066,9 +1066,9 @@ body {
   <div class="quiz-filter">
     <span>シナリオ:</span>
     <select id="quiz-scenario" onchange="onScenarioChange()">
+      <option value="mix">ミックス</option>
       <option value="open">オープン</option>
       <option value="vs-open">vs オープン</option>
-      <option value="mix">ミックス</option>
     </select>
     <span id="quiz-position-label" style="margin-left:8px;">ポジション:</span>
     <select id="quiz-position-filter" onchange="nextQuestion()">
@@ -1394,7 +1394,7 @@ let state = {
   currentHand: null,
   currentPosition: null,
   answered: false,
-  scenario: 'open',
+  scenario: 'mix',
   openerPosition: null,
   threeBettorPosition: null,
   threeBettorHand: null,
@@ -2388,7 +2388,7 @@ updateStats();
 populatePositionSelect();
 populateQuizPositionFilter();
 buildLegend();
-nextQuestion();
+onScenarioChange();
 </script>
 </body>
 </html>
