@@ -1506,22 +1506,33 @@ const CHIP_STACK_MAP = {
   '9bb': 4, '27bb': 5, 'call': 3,
 };
 
+function getPositionNearFelt(slotIndex, insetPx) {
+  const seat = SLOT_POSITIONS[slotIndex];
+  const seatLeft = parseFloat(seat.left);
+  const seatTop = parseFloat(seat.top);
+  const seatX = seatLeft * 3, seatY = seatTop * 1.8;
+  const dx = 150 - seatX, dy = 90 - seatY;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+  const R = Math.sqrt(((seatX - 150) / 126) ** 2 + ((seatY - 90) / 66) ** 2);
+  const t = 1 - 1 / R + insetPx / dist;
+  return {
+    left: seatLeft + t * (50 - seatLeft),
+    top: seatTop + t * (50 - seatTop)
+  };
+}
+
 function addChip(table, slotIndex, text, type, animate) {
   table.querySelectorAll(`.chip-stack[data-slot="${slotIndex}"]`).forEach(el => el.remove());
-  const seat = SLOT_POSITIONS[slotIndex];
-  const seatTop = parseFloat(seat.top);
-  const seatLeft = parseFloat(seat.left);
-  const chipTop = seatTop + (50 - seatTop) * 0.45;
-  const chipLeft = seatLeft + (50 - seatLeft) * 0.45;
-  const isBottom = seatTop > 50;
+  const pos = getPositionNearFelt(slotIndex, 15);
+  const isBottom = parseFloat(SLOT_POSITIONS[slotIndex].top) > 50;
 
   const count = CHIP_STACK_MAP[text] || 1;
   const stack = document.createElement('div');
   stack.className = 'chip-stack';
   if (isBottom) stack.classList.add('chip-stack-bottom');
   if (animate) stack.classList.add('chip-animate-in');
-  stack.style.top = chipTop + '%';
-  stack.style.left = chipLeft + '%';
+  stack.style.top = pos.top + '%';
+  stack.style.left = pos.left + '%';
   stack.dataset.slot = slotIndex;
   for (let i = 0; i < count; i++) {
     const disc = document.createElement('div');
@@ -1548,23 +1559,12 @@ function addBlindsChips(table, heroIdx) {
 function addDealerButton(table, heroIdx) {
   table.querySelectorAll('.dealer-btn').forEach(el => el.remove());
   const slotIndex = getSlotForPosition('BTN', heroIdx);
-  const seat = SLOT_POSITIONS[slotIndex];
-  const seatTop = parseFloat(seat.top);
-  const seatLeft = parseFloat(seat.left);
-  // Fixed pixel distance toward center, normalized for table aspect ratio (300x180)
-  const dx = 50 - seatLeft;
-  const dy = 50 - seatTop;
-  const dxPx = dx * 3;
-  const dyPx = dy * 1.8;
-  const dist = Math.sqrt(dxPx * dxPx + dyPx * dyPx);
-  const target = 22;
-  const btnTop = seatTop + (dyPx / dist * target) / 1.8;
-  const btnLeft = seatLeft + (dxPx / dist * target) / 3;
+  const pos = getPositionNearFelt(slotIndex, 8);
   const el = document.createElement('div');
   el.className = 'dealer-btn';
   el.textContent = 'D';
-  el.style.top = btnTop + '%';
-  el.style.left = btnLeft + '%';
+  el.style.top = pos.top + '%';
+  el.style.left = pos.left + '%';
   table.appendChild(el);
 }
 
