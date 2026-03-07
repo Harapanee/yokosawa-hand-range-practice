@@ -726,6 +726,14 @@ body::after {
 }
 .result-symbol.correct { color: var(--green); }
 .result-symbol.wrong { color: var(--red-bright); }
+.result-symbol .correct-action {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-top: -8px;
+}
 @keyframes resultPop {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
   30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
@@ -1711,10 +1719,14 @@ function renderPlayingCards(info) {
 
 // ============ CONFETTI ============
 
-function showResultSymbol(isCorrect) {
+function showResultSymbol(isCorrect, correctAction) {
   const el = document.createElement('div');
   el.className = 'result-symbol ' + (isCorrect ? 'correct' : 'wrong');
-  el.textContent = isCorrect ? '○' : '✕';
+  if (isCorrect) {
+    el.textContent = '○';
+  } else {
+    el.innerHTML = '✕<span class="correct-action">' + correctAction + '</span>';
+  }
   document.body.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
 }
@@ -1983,7 +1995,7 @@ async function answer(userAction) {
   void screen.offsetWidth;
   screen.classList.add(isCorrect ? 'flash-correct' : 'flash-wrong');
 
-  showResultSymbol(isCorrect);
+  showResultSymbol(isCorrect, correctAction);
 
   if (isCorrect) {
 
