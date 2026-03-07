@@ -348,21 +348,32 @@ body::after {
   box-shadow: 0 0 12px rgba(208,64,64,0.3);
   overflow: visible;
 }
-.poker-table .opener-label {
+.poker-table .chip {
   position: absolute;
-  bottom: -11px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-family: 'DM Sans', sans-serif;
+  transform: translate(-50%, -50%);
+  font-family: 'JetBrains Mono', monospace;
   font-size: 7px;
-  color: #ffaaaa;
   font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 8px;
   white-space: nowrap;
-  background: rgba(168,50,50,0.85);
-  padding: 1px 5px;
-  border-radius: 4px;
-  letter-spacing: 0.8px;
-  border: 1px solid rgba(208,64,64,0.3);
+  z-index: 3;
+  line-height: 1;
+}
+.poker-table .chip-blind {
+  background: rgba(201,169,110,0.25);
+  color: var(--gold-light);
+  border: 1px solid rgba(201,169,110,0.3);
+}
+.poker-table .chip-raise {
+  background: rgba(168,50,50,0.45);
+  color: #ffcccc;
+  border: 1px solid rgba(208,64,64,0.4);
+}
+.poker-table .chip-hero {
+  background: rgba(201,169,110,0.4);
+  color: var(--gold-light);
+  border: 1px solid rgba(201,169,110,0.5);
 }
 .poker-table .hero-label {
   position: absolute;
@@ -1237,9 +1248,38 @@ const SLOT_POSITIONS = [
 
 const ACTION_ORDER = ['UTG','UTG+1','MP','LJ','HJ','CO','BTN','SB','BB'];
 
+function getSlotForPosition(posName, heroIdx) {
+  const seatIdx = TABLE_SEATS.indexOf(posName);
+  return (seatIdx - heroIdx + 9) % 9;
+}
+
+function addChip(table, slotIndex, text, type) {
+  const seat = SLOT_POSITIONS[slotIndex];
+  const seatTop = parseFloat(seat.top);
+  const seatLeft = parseFloat(seat.left);
+  const chipTop = seatTop + (50 - seatTop) * 0.45;
+  const chipLeft = seatLeft + (50 - seatLeft) * 0.45;
+
+  const chip = document.createElement('div');
+  chip.className = 'chip chip-' + type;
+  chip.style.top = chipTop + '%';
+  chip.style.left = chipLeft + '%';
+  chip.textContent = text;
+  table.appendChild(chip);
+}
+
+function clearTable(table) {
+  table.querySelectorAll('.seat, .chip').forEach(el => el.remove());
+}
+
+function addBlindsChips(table, heroIdx) {
+  addChip(table, getSlotForPosition('SB', heroIdx), '0.5', 'blind');
+  addChip(table, getSlotForPosition('BB', heroIdx), '1', 'blind');
+}
+
 function updateTableSeats(activePos) {
   const table = document.getElementById('poker-table');
-  table.querySelectorAll('.seat').forEach(el => el.remove());
+  clearTable(table);
 
   const heroIdx = TABLE_SEATS.indexOf(activePos);
   const actIdx = ACTION_ORDER.indexOf(activePos);
@@ -1272,6 +1312,8 @@ function updateTableSeats(activePos) {
 
     table.appendChild(el);
   }
+
+  addBlindsChips(table, heroIdx);
 }
 
 // ============ CARD RENDERING ============
@@ -1444,7 +1486,7 @@ function renderHand() {
 
 function updateTableSeatsVs3bet(heroName, threeBettorName) {
   const table = document.getElementById('poker-table');
-  table.querySelectorAll('.seat').forEach(el => el.remove());
+  clearTable(table);
 
   const heroIdx = TABLE_SEATS.indexOf(heroName);
 
@@ -1461,10 +1503,10 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
     const label = posName === 'UTG+1' ? 'UTG1' : posName;
     if (s === 0) {
       el.classList.add('hero');
-      el.innerHTML = label + '<span class="hero-label">3bb</span>';
+      el.innerHTML = label + '<span class="hero-label">YOU</span>';
     } else if (posName === threeBettorName) {
       el.classList.add('opener');
-      el.innerHTML = label + '<span class="opener-label">9bb</span>';
+      el.textContent = label;
     } else {
       el.classList.add('acted');
       el.textContent = label;
@@ -1472,11 +1514,15 @@ function updateTableSeatsVs3bet(heroName, threeBettorName) {
 
     table.appendChild(el);
   }
+
+  addBlindsChips(table, heroIdx);
+  addChip(table, 0, '3bb', 'hero');
+  addChip(table, getSlotForPosition(threeBettorName, heroIdx), '9bb', 'raise');
 }
 
 function updateTableSeatsVsOpen(openerName, heroName) {
   const table = document.getElementById('poker-table');
-  table.querySelectorAll('.seat').forEach(el => el.remove());
+  clearTable(table);
 
   const heroIdx = TABLE_SEATS.indexOf(heroName);
   const heroActIdx = ACTION_ORDER.indexOf(heroName);
@@ -1501,7 +1547,7 @@ function updateTableSeatsVsOpen(openerName, heroName) {
       el.innerHTML = label + '<span class="hero-label">YOU</span>';
     } else if (posName === openerName) {
       el.classList.add('opener');
-      el.innerHTML = label + '<span class="opener-label">3bb</span>';
+      el.textContent = label;
     } else if (behindSet.has(posName)) {
       el.classList.add('behind');
       el.textContent = label;
@@ -1512,6 +1558,9 @@ function updateTableSeatsVsOpen(openerName, heroName) {
 
     table.appendChild(el);
   }
+
+  addBlindsChips(table, heroIdx);
+  addChip(table, getSlotForPosition(openerName, heroIdx), '3bb', 'raise');
 }
 
 function updateButtons() {
