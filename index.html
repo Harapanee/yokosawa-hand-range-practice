@@ -1371,14 +1371,85 @@ function nextQuestionVsOpen() {
 }
 
 function nextQuestionVs3bet() {
-  // Stub — will be implemented in Task 5
-  nextQuestionOpen();
+  // Hero is the original opener
+  const hero = OPENER_POSITIONS[Math.floor(Math.random() * OPENER_POSITIONS.length)];
+  state.currentPosition = hero;
+  state.openerPosition = hero; // hero is the opener in this scenario
+
+  // 3bettor is someone behind hero
+  const threeBettorCandidates = getHeroPositionsBehind(hero.name);
+  const threeBettor = threeBettorCandidates[Math.floor(Math.random() * threeBettorCandidates.length)];
+  state.threeBettorPosition = threeBettor;
+
+  // Only deal hands hero would have opened (tier 1 to hero.maxTier)
+  const openableHands = ALL_HANDS.filter(h => {
+    const t = getTier(h);
+    return t >= 1 && t <= hero.maxTier;
+  });
+
+  // 50/50 between continue-worthy and fold-worthy hands
+  const allAnswers = openableHands.map(h => ({
+    hand: h,
+    answer: getCorrectAnswer('vs-3bet', h, hero, null)
+  }));
+  const continuable = allAnswers.filter(a => a.answer !== 'FOLD');
+  const foldable = allAnswers.filter(a => a.answer === 'FOLD');
+
+  if (Math.random() < 0.5 && continuable.length > 0) {
+    state.currentHand = continuable[Math.floor(Math.random() * continuable.length)].hand;
+  } else if (foldable.length > 0) {
+    state.currentHand = foldable[Math.floor(Math.random() * foldable.length)].hand;
+  } else if (continuable.length > 0) {
+    state.currentHand = continuable[Math.floor(Math.random() * continuable.length)].hand;
+  } else {
+    state.currentHand = openableHands[Math.floor(Math.random() * openableHands.length)];
+  }
+
+  document.getElementById('position-label').innerHTML =
+    `あなた: <strong>${hero.name}</strong>オープン → ${threeBettor.name}の3bet`;
+  updateTableSeatsVs3bet(hero.name, threeBettor.name);
+  renderHand();
 }
 
 function renderHand() {
   const info = handDisplayInfo(state.currentHand);
   document.getElementById('hand-name').textContent = info.name;
   renderPlayingCards(info);
+}
+
+function updateTableSeatsVs3bet(heroName, threeBettorName) {
+  const table = document.getElementById('poker-table');
+  table.querySelectorAll('.seat').forEach(el => el.remove());
+
+  const heroIdx = TABLE_SEATS.indexOf(heroName);
+
+  for (let s = 0; s < 9; s++) {
+    const seatIdx = (heroIdx + s) % 9;
+    const posName = TABLE_SEATS[seatIdx];
+    const slot = SLOT_POSITIONS[s];
+
+    const el = document.createElement('div');
+    el.className = 'seat';
+    el.style.top = slot.top;
+    el.style.left = slot.left;
+
+    const label = posName === 'UTG+1' ? 'UTG1' : posName;
+    if (s === 0) {
+      el.classList.add('hero');
+      el.innerHTML = label + '<span class="hero-label">YOU</span>';
+    } else if (posName === threeBettorName) {
+      el.style.background = 'rgba(168,50,50,0.75)';
+      el.style.color = '#ffaaaa';
+      el.style.borderColor = 'rgba(208,64,64,0.5)';
+      el.style.boxShadow = '0 0 12px rgba(208,64,64,0.3)';
+      el.textContent = label;
+    } else {
+      el.classList.add('acted');
+      el.textContent = label;
+    }
+
+    table.appendChild(el);
+  }
 }
 
 function updateTableSeatsVsOpen(openerName, heroName) {
@@ -1475,9 +1546,11 @@ function answer(userAction) {
   const lastResult = document.getElementById('last-result');
   const cls = isCorrect ? 'correct' : 'wrong';
   const icon = isCorrect ? '&#10004;' : '&#10008;';
-  const posInfo = state.openerPosition
-    ? `${state.currentPosition.name} vs ${state.openerPosition.name}`
-    : state.currentPosition.name;
+  const posInfo = scenario === 'vs-3bet'
+    ? `${state.currentPosition.name} vs ${state.threeBettorPosition.name}`
+    : state.openerPosition
+      ? `${state.currentPosition.name} vs ${state.openerPosition.name}`
+      : state.currentPosition.name;
   lastResult.innerHTML = `<div class="last-result-inner ${cls}">
     <span class="lr-icon">${icon}</span>
     <span>${posInfo}</span>
