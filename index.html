@@ -1341,7 +1341,7 @@ body {
     <div class="guide-body">
       <div class="guide-content">
         <h3>ティア（色）の定義</h3>
-        <p>ハンドは強さ順にT1〜T8の8段階に分類されます。番号が小さいほど強いハンドです。</p>
+        <p>ハンドは強さ順に<strong>T1〜T8の8段階</strong>に分類されます。<br>番号が小さいほど強いハンドです。</p>
         <table class="tier-table">
           <tr><th>ティア</th><th>色</th><th>意味</th><th>主なハンド例</th></tr>
           <tr><td><span class="tier-badge" style="background:#1a237e"></span>T1</td><td>紺</td><td>プレミア</td><td>AA, KK, QQ, AKs, AKo</td></tr>
@@ -1355,49 +1355,67 @@ body {
         </table>
 
         <h3>ポジションとオープンレンジ</h3>
-        <p>9人テーブル。後ろに人が多い＝厳しく、少ない＝広く参加OKです。</p>
+        <p>9人テーブル。後ろの人数がそのまま「何色まで参加できるか」を決めます。</p>
         <table class="tier-table">
-          <tr><th>ポジション</th><th>後ろ人数</th><th>maxTier</th><th>オープン範囲</th></tr>
-          <tr><td>UTG</td><td>8</td><td>T3</td><td>T1〜T3</td></tr>
-          <tr><td>UTG+1</td><td>7</td><td>T4</td><td>T1〜T4</td></tr>
-          <tr><td>MP</td><td>6</td><td>T4</td><td>T1〜T4</td></tr>
-          <tr><td>LJ</td><td>5</td><td>T5</td><td>T1〜T5</td></tr>
-          <tr><td>HJ</td><td>4</td><td>T5</td><td>T1〜T5</td></tr>
-          <tr><td>CO</td><td>3</td><td>T6</td><td>T1〜T6</td></tr>
-          <tr><td>BTN</td><td>2</td><td>T7</td><td>T1〜T7</td></tr>
-          <tr><td>SB</td><td>1</td><td>T7</td><td>T1〜T7</td></tr>
-          <tr><td>BB</td><td>0</td><td>-</td><td>オープン不可</td></tr>
+          <tr><th>ポジション</th><th>後ろ人数</th><th>参加できる範囲</th></tr>
+          <tr><td>UTG</td><td>8人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span> T1〜T3（黄まで）</td></tr>
+          <tr><td>UTG+1</td><td>7人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span> T1〜T4（緑まで）</td></tr>
+          <tr><td>MP</td><td>6人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span> T1〜T4（緑まで）</td></tr>
+          <tr><td>LJ</td><td>5人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span><span class="tier-badge" style="background:#0277bd"></span> T1〜T5（水色まで）</td></tr>
+          <tr><td>HJ</td><td>4人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span><span class="tier-badge" style="background:#0277bd"></span> T1〜T5（水色まで）</td></tr>
+          <tr><td>CO</td><td>3人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span><span class="tier-badge" style="background:#0277bd"></span><span class="tier-badge" style="background:#e0e0e0"></span> T1〜T6（白まで）</td></tr>
+          <tr><td>BTN</td><td>2人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span><span class="tier-badge" style="background:#0277bd"></span><span class="tier-badge" style="background:#e0e0e0"></span><span class="tier-badge" style="background:#7b1fa2"></span> T1〜T7（紫まで）</td></tr>
+          <tr><td>SB</td><td>1人</td><td><span class="tier-badge" style="background:#1a237e"></span><span class="tier-badge" style="background:#c62828"></span><span class="tier-badge" style="background:#f9a825"></span><span class="tier-badge" style="background:#2e7d32"></span><span class="tier-badge" style="background:#0277bd"></span><span class="tier-badge" style="background:#e0e0e0"></span><span class="tier-badge" style="background:#7b1fa2"></span> T1〜T7（紫まで）</td></tr>
+          <tr><td>BB</td><td>0人</td><td>オープン不可（既にBBを出している）</td></tr>
         </table>
 
         <h3>オープン（自分が最初にレイズ）</h3>
-        <div class="rule-box">ハンドのティア ≦ ポジションのmaxTier → RAISE
-それ以外 → FOLD</div>
-        <p>例: HJ(maxT5) で AJo(T3) → T3 ≦ T5 → <strong>RAISE</strong></p>
+        <p>シンプルに「そのポジションの範囲内かどうか」だけ見ます。</p>
+        <div class="rule-box">ハンドの色がポジションの範囲内 → <strong>RAISE</strong>
+範囲外 → <strong>FOLD</strong></div>
+        <p style="margin-top:8px;color:var(--text-dim);font-size:13px;">
+          例: HJでAJo → AJoは<span class="tier-badge" style="background:#f9a825;vertical-align:middle"></span>黄(T3)、HJは水色(T5)まで → 範囲内なので<strong> RAISE</strong><br>
+          例: UTGで66 → 66は<span class="tier-badge" style="background:#2e7d32;vertical-align:middle"></span>緑(T4)、UTGは黄(T3)まで → 範囲外なので<strong> FOLD</strong>
+        </p>
 
         <h3>vs オープン（前の人のレイズに対して）</h3>
-        <p>相手のmaxTierを基準に、自分のハンドのティアと比較します。</p>
-        <div class="rule-box">ティア ≦ openerMax - 2 → 3BET（2色上以上）
-ティア = openerMax - 1 → CALL（1色上）
-それ以外 → FOLD（同色以下）</div>
-        <p>例: COオープン(maxT6)に対してBTNで T9s(T4) → T4 ≦ T4 → <strong>3BET</strong></p>
+        <p>相手のオープン範囲（色）を基準に、自分のハンドが<strong>どれだけ上か</strong>で判断します。</p>
+        <div class="rule-box"><strong>2色以上</strong>強い → <strong>3BET</strong>（自信を持ってリレイズ）
+<strong>1色だけ</strong>強い → <strong>CALL</strong>（コールで参加）
+<strong>同色かそれより弱い</strong> → <strong>FOLD</strong></div>
+        <p style="margin-top:8px;color:var(--text-dim);font-size:13px;">
+          「色の差」とは、相手のオープン範囲の上限ティアと自分のハンドのティアの差です。
+        </p>
+        <p style="margin-top:8px;color:var(--text-dim);font-size:13px;">
+          例: COオープン → COの範囲は<span class="tier-badge" style="background:#e0e0e0;vertical-align:middle"></span>白(T6)まで<br>
+          　BTNでT9s<span class="tier-badge" style="background:#2e7d32;vertical-align:middle"></span>緑(T4) → 白から2色上 → <strong>3BET</strong><br>
+          　BTNでJ9s<span class="tier-badge" style="background:#0277bd;vertical-align:middle"></span>水色(T5) → 白から1色上 → <strong>CALL</strong><br>
+          　BTNでK8s<span class="tier-badge" style="background:#e0e0e0;vertical-align:middle"></span>白(T6) → 同色 → <strong>FOLD</strong>
+        </p>
 
         <h3>BBの特殊ルール（vs オープン）</h3>
-        <p>BBは既に1BB払っているため、CALL範囲が広がります。</p>
+        <p>BBは既に1BBを出しているのでお得にコールできます。<br>通常より<strong>CALL範囲が広がり</strong>ます。</p>
         <table class="tier-table">
-          <tr><th>オープナー</th><th>CALL上限</th><th>含まれる追加ティア</th></tr>
-          <tr><td>BTN</td><td>T8まで</td><td>紫 + ピンクまで</td></tr>
-          <tr><td>CO</td><td>T7まで</td><td>紫まで</td></tr>
-          <tr><td>それ以外</td><td>T6まで</td><td>白まで（基本防衛）</td></tr>
+          <tr><th>オープナー</th><th>CALL範囲</th><th>わかりやすく言うと</th></tr>
+          <tr><td>BTN</td><td><span class="tier-badge" style="background:#e91e90;vertical-align:middle"></span>T8（ピンク）まで</td><td>ほぼ全部コール</td></tr>
+          <tr><td>CO</td><td><span class="tier-badge" style="background:#7b1fa2;vertical-align:middle"></span>T7（紫）まで</td><td>かなり広くコール</td></tr>
+          <tr><td>それ以外</td><td><span class="tier-badge" style="background:#e0e0e0;vertical-align:middle"></span>T6（白）まで</td><td>防衛的にコール</td></tr>
         </table>
+        <p style="margin-top:8px;color:var(--text-dim);font-size:13px;">※ 3BETの条件（2色以上強い）は通常と同じです。CALL範囲だけ広がります。</p>
 
         <h3>vs 3bet（3betされた後の対応）</h3>
-        <p>自分のmaxTierを基準にします。T1（AA,KK,QQ,AKs,AKo）は何があっても降りません。</p>
-        <div class="rule-box">ティア = T1 → 4BET（常に）
-ティア ≦ heroMax - 4 → 4BET
-ティア ≦ heroMax - 2 → CALL
-それ以外 → FOLD</div>
-        <p>例: BTN(maxT7)で KJs(T3) → T3 ≦ T3 → <strong>4BET</strong></p>
-        <p>例: BTN(maxT7)で A9s(T4) → T4 ≦ T5 → <strong>CALL</strong></p>
+        <p>自分のオープン範囲を基準に、ハンドが<strong>どれだけ上か</strong>で判断します。</p>
+        <div class="rule-box"><span class="tier-badge" style="background:#1a237e;vertical-align:middle"></span> T1（プレミア）→ <strong>常に4BET</strong>（絶対降りない）
+<strong>4色以上</strong>強い → <strong>4BET</strong>
+<strong>2〜3色</strong>強い → <strong>CALL</strong>
+<strong>1色以下</strong> → <strong>FOLD</strong></div>
+        <p style="margin-top:8px;color:var(--text-dim);font-size:13px;">
+          例: BTNオープン → BTNの範囲は<span class="tier-badge" style="background:#7b1fa2;vertical-align:middle"></span>紫(T7)まで<br>
+          　KJs<span class="tier-badge" style="background:#f9a825;vertical-align:middle"></span>黄(T3) → 紫から4色上 → <strong>4BET</strong><br>
+          　A9s<span class="tier-badge" style="background:#2e7d32;vertical-align:middle"></span>緑(T4) → 紫から3色上 → <strong>CALL</strong><br>
+          　J9s<span class="tier-badge" style="background:#0277bd;vertical-align:middle"></span>水色(T5) → 紫から2色上 → <strong>CALL</strong><br>
+          　K8s<span class="tier-badge" style="background:#e0e0e0;vertical-align:middle"></span>白(T6) → 紫から1色上 → <strong>FOLD</strong>
+        </p>
       </div>
     </div>
   </div>
