@@ -2274,7 +2274,7 @@ function showResultSymbol(isCorrect, correctAction) {
   const el = document.createElement('div');
   el.className = 'result-symbol ' + (isCorrect ? 'correct' : 'wrong');
   if (isCorrect) {
-    el.textContent = '○';
+    el.innerHTML = '○<span class="correct-action">' + correctAction + '</span>';
   } else {
     el.innerHTML = '✕<span class="correct-action">' + correctAction + '</span>';
   }
