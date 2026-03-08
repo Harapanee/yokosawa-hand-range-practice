@@ -680,51 +680,6 @@ body {
 .shake { animation: shake 0.35s ease-in-out; }
 
 /* ===== LAST RESULT BAR ===== */
-.last-result {
-  width: 100%;
-  min-height: 40px;
-  margin-bottom: 8px;
-}
-.last-result-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  animation: resultFadeLife 2s ease-out forwards;
-}
-.last-result-inner.correct {
-  background: rgba(88,204,2,0.12);
-  color: var(--green);
-  border: 2px solid rgba(88,204,2,0.25);
-}
-.last-result-inner.wrong {
-  background: rgba(255,75,75,0.12);
-  color: var(--red);
-  border: 2px solid rgba(255,75,75,0.25);
-}
-.last-result-inner .lr-icon { font-size: 18px; }
-.last-result-inner .lr-tier-badge {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  vertical-align: middle;
-}
-.last-result-inner .lr-detail {
-  font-size: 12px;
-  font-weight: 600;
-  opacity: 0.7;
-}
-@keyframes resultFadeLife {
-  0% { transform: translateY(-6px); opacity: 0; }
-  8% { transform: translateY(0); opacity: 1; }
-  65% { opacity: 1; }
-  100% { opacity: 0; }
-}
 
 /* ===== SCREEN FLASH ===== */
 #quiz-screen::before {
@@ -1284,7 +1239,6 @@ body {
     <button class="btn btn-fold" onclick="answer('FOLD')">FOLD</button>
   </div>
 
-  <div class="last-result" id="last-result"></div>
 
   <div class="kb-hint">R / F キー対応</div>
 </div>
@@ -2489,23 +2443,6 @@ async function answer(userAction) {
     isCorrect: isCorrect,
   });
 
-  const tierColor = TIER_COLORS[tier] || TIER_COLORS[0];
-  const tierName = tier === 0 ? 'フォールド' : `T${tier}`;
-  const lastResult = document.getElementById('last-result');
-  const cls = isCorrect ? 'correct' : 'wrong';
-  const icon = isCorrect ? '&#10004;' : '&#10008;';
-  const posInfo = scenario === 'vs-3bet'
-    ? `${state.currentPosition.name} vs ${state.threeBettorPosition.name}`
-    : state.openerPosition
-      ? `${state.currentPosition.name} vs ${state.openerPosition.name}`
-      : state.currentPosition.name;
-  lastResult.innerHTML = `<div class="last-result-inner ${cls}">
-    <span class="lr-icon">${icon}</span>
-    <span>${posInfo}</span>
-    <span>${hand}</span>
-    <span class="lr-tier-badge" style="background:${tierColor}"></span>
-    <span class="lr-detail">${tierName} → ${correctAction}</span>
-  </div>`;
 
   const screen = document.getElementById('quiz-screen');
   screen.classList.remove('flash-correct', 'flash-wrong');
