@@ -1268,6 +1268,7 @@ body {
       <option value="mix">ミックス</option>
       <option value="open">オープン</option>
       <option value="vs-open">vs オープン</option>
+      <option value="review">復習</option>
     </select>
     <span id="quiz-position-label" style="margin-left:8px;">ポジション:</span>
     <select id="quiz-position-filter" onchange="nextQuestion()">
@@ -1763,6 +1764,51 @@ function saveState() {
   } catch(e) {}
 }
 
+// ============ WRONG ANSWERS (REVIEW) ============
+
+let wrongAnswers = [];
+
+function wrongAnswerKey(entry) {
+  return `${entry.scenario}|${entry.heroPosition}|${entry.openerPosition || ''}|${entry.hand}`;
+}
+
+function loadWrongAnswers() {
+  try {
+    const saved = localStorage.getItem('yokosawa-wrong-answers');
+    if (saved) wrongAnswers = JSON.parse(saved);
+  } catch(e) { wrongAnswers = []; }
+}
+
+function saveWrongAnswers(data) {
+  if (data !== undefined) wrongAnswers = data;
+  try {
+    localStorage.setItem('yokosawa-wrong-answers', JSON.stringify(wrongAnswers));
+  } catch(e) {}
+}
+
+function addWrongAnswer(scenario, heroPosition, openerPosition, hand) {
+  const entry = { scenario, heroPosition, openerPosition: openerPosition || '', hand };
+  const key = wrongAnswerKey(entry);
+  if (!wrongAnswers.some(w => wrongAnswerKey(w) === key)) {
+    wrongAnswers.push(entry);
+    saveWrongAnswers();
+  }
+}
+
+function removeWrongAnswer(scenario, heroPosition, openerPosition, hand) {
+  const entry = { scenario, heroPosition, openerPosition: openerPosition || '', hand };
+  const key = wrongAnswerKey(entry);
+  wrongAnswers = wrongAnswers.filter(w => wrongAnswerKey(w) !== key);
+  saveWrongAnswers();
+}
+
+function updateReviewCount() {
+  const opt = document.querySelector('#quiz-scenario option[value="review"]');
+  if (opt) {
+    opt.textContent = wrongAnswers.length > 0 ? `復習 (${wrongAnswers.length})` : '復習';
+  }
+}
+
 // ============ HELPERS ============
 
 const OPENER_POSITIONS = POSITIONS.filter(p => !p.heroOnly);
@@ -2176,6 +2222,18 @@ async function nextQuestion() {
   animationController.isAnimating = true;
 
   let scenario = document.getElementById('quiz-scenario').value;
+
+  if (scenario === 'review') {
+    try {
+      await nextQuestionReview(animationController.abortController.signal);
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      throw e;
+    }
+    animationController.isAnimating = false;
+    return;
+  }
+
   if (scenario === 'mix') {
     scenario = Math.random() < 0.5 ? 'open' : 'vs-open';
   }
@@ -2252,6 +2310,72 @@ async function nextQuestionVsOpen(signal) {
   renderHand();
   const { table, heroIdx } = setupTableSeatsWaiting(hero.name, behindSet);
   await animateFoldSequence({ scenario: 'vs-open', table, heroIdx, heroName: hero.name, openerName: opener.name }, signal);
+}
+
+async function nextQuestionReview(signal) {
+  if (wrongAnswers.length === 0) {
+    const table = document.getElementById('poker-table');
+    clearTable(table);
+    document.getElementById('playing-cards').innerHTML = '';
+    const btnRow = document.getElementById('btn-row');
+    btnRow.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:14px;padding:16px;">不正解の問題がありません</div>';
+    const hint = document.querySelector('.kb-hint');
+    hint.textContent = '復習モード';
+    return;
+  }
+
+  const entry = wrongAnswers[Math.floor(Math.random() * wrongAnswers.length)];
+  const heroPos = POSITIONS.find(p => p.name === entry.heroPosition);
+  state.currentPosition = heroPos;
+  state.currentHand = entry.hand;
+  state.scenario = entry.scenario;
+
+  const hint = document.querySelector('.kb-hint');
+
+  if (entry.scenario === 'open') {
+    state.openerPosition = null;
+    state.threeBettorPosition = null;
+    state.threeBettorHand = null;
+    hint.textContent = 'R / F キー対応（復習）';
+
+    const actIdx = ACTION_ORDER.indexOf(heroPos.name);
+    const behindSet = new Set(ACTION_ORDER.slice(actIdx + 1));
+    renderHand();
+    updateButtons();
+    const { table, heroIdx } = setupTableSeatsWaiting(heroPos.name, behindSet);
+    await animateFoldSequence({ scenario: 'open', table, heroIdx, heroName: heroPos.name }, signal);
+
+  } else if (entry.scenario === 'vs-open') {
+    const openerPos = POSITIONS.find(p => p.name === entry.openerPosition);
+    state.openerPosition = openerPos;
+    state.threeBettorPosition = null;
+    state.threeBettorHand = null;
+    hint.textContent = '3 / C / F キー対応（復習）';
+
+    const heroActIdx = ACTION_ORDER.indexOf(heroPos.name);
+    const behindSet = new Set(ACTION_ORDER.slice(heroActIdx + 1));
+    renderHand();
+    updateButtons();
+    const { table, heroIdx } = setupTableSeatsWaiting(heroPos.name, behindSet);
+    await animateFoldSequence({ scenario: 'vs-open', table, heroIdx, heroName: heroPos.name, openerName: openerPos.name }, signal);
+
+  } else if (entry.scenario === 'vs-3bet') {
+    const threeBettorPos = POSITIONS.find(p => p.name === entry.openerPosition);
+    state.openerPosition = state.currentPosition;
+    state.threeBettorPosition = threeBettorPos;
+    hint.textContent = '4 / C / F キー対応（復習）';
+
+    const heroMax = heroPos.maxTier;
+    const chainRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= heroMax - 2; });
+    state.threeBettorHand = chainRange.length > 0
+      ? chainRange[Math.floor(Math.random() * chainRange.length)]
+      : null;
+
+    renderHand();
+    updateButtons();
+    const { table, heroIdx } = setupTableSeatsWaiting(heroPos.name, new Set());
+    await animateFoldSequence({ scenario: 'vs-3bet', table, heroIdx, heroName: heroPos.name, threeBettorName: threeBettorPos.name }, signal);
+  }
 }
 
 function showOpponentHand(hand) {
@@ -2334,6 +2458,7 @@ async function answer(userAction) {
   const tier = getTier(hand);
   const correctAction = getCorrectAnswer(scenario, hand, state.currentPosition, state.openerPosition);
   const isCorrect = userAction === correctAction;
+  const isReviewMode = document.getElementById('quiz-scenario').value === 'review';
 
   state.total++;
   if (isCorrect) {
@@ -2346,6 +2471,16 @@ async function answer(userAction) {
 
   updateStats();
   saveState();
+
+  const opponentName = scenario === 'vs-3bet'
+    ? state.threeBettorPosition.name
+    : (state.openerPosition ? state.openerPosition.name : '');
+  if (!isCorrect) {
+    addWrongAnswer(scenario, state.currentPosition.name, opponentName, hand);
+  } else if (isReviewMode) {
+    removeWrongAnswer(scenario, state.currentPosition.name, opponentName, hand);
+  }
+  updateReviewCount();
 
   questionLog.unshift({
     scenario: scenario,
@@ -2393,7 +2528,7 @@ async function answer(userAction) {
     animationController.isAnimating = true;
 
     try {
-      if (scenario === 'open' && userAction === 'RAISE' && !state.isChained) {
+      if (scenario === 'open' && userAction === 'RAISE' && !state.isChained && !isReviewMode) {
         if (await tryChainTo3bet(signal)) {
           animationController.isAnimating = false;
           return;
@@ -2448,13 +2583,15 @@ function updateStats() {
 }
 
 function resetScore() {
-  if (!confirm('スコアをリセットしますか？')) return;
+  if (!confirm('スコアと復習データをリセットしますか？')) return;
   state.correct = 0;
   state.total = 0;
   state.streak = 0;
   state.bestStreak = 0;
   updateStats();
   saveState();
+  saveWrongAnswers([]);
+  updateReviewCount();
 }
 
 // ============ RANGE TABLE ============
@@ -2720,6 +2857,8 @@ function onScenarioChange() {
     hint.textContent = '3 / C / F キー対応';
   } else if (scenario === 'mix') {
     hint.textContent = 'R / 3 / C / F キー対応';
+  } else if (scenario === 'review') {
+    hint.textContent = '復習モード';
   }
 
   nextQuestion();
@@ -2756,10 +2895,12 @@ function loadTheme() {
 
 loadTheme();
 loadState();
+loadWrongAnswers();
 updateStats();
 populatePositionSelect();
 populateQuizPositionFilter();
 buildLegend();
+updateReviewCount();
 onScenarioChange();
 
 if ('serviceWorker' in navigator) {
