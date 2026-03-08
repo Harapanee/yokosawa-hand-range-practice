@@ -716,6 +716,9 @@ body {
   z-index: 300;
   pointer-events: none;
   opacity: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   animation: resultPop 0.6s ease-out forwards;
 }
 .result-symbol.wrong {
@@ -724,14 +727,12 @@ body {
 .result-symbol.correct { color: var(--green); }
 .result-symbol.wrong { color: var(--red); }
 .result-symbol .correct-action {
-  display: block;
   font-family: 'Nunito', sans-serif;
   font-size: 28px;
   font-weight: 900;
   letter-spacing: 2px;
-  padding-left: 2px;
   margin-top: -20px;
-  text-align: center;
+  white-space: nowrap;
 }
 @keyframes resultPop {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
