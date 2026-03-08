@@ -1161,6 +1161,72 @@ body {
 }
 .theme-toggle:hover { opacity: 1; }
 
+/* ===== ANIMATION TOGGLE ===== */
+.anim-toggle {
+  position: absolute;
+  top: 14px;
+  left: 36px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.anim-toggle:hover { opacity: 1; }
+
+/* ===== ANIMATIONS OFF ===== */
+[data-animations="off"] .screen.active {
+  animation: none;
+}
+[data-animations="off"] .poker-table .seat.hero {
+  animation: none;
+}
+[data-animations="off"] .poker-table .seat {
+  transition: none;
+}
+[data-animations="off"] .opponent-cards {
+  animation: none;
+  opacity: 1;
+}
+[data-animations="off"] #equity-display {
+  animation: none;
+  opacity: 1;
+}
+[data-animations="off"] .poker-table .chip-stack.chip-animate-in .chip-disc,
+[data-animations="off"] .poker-table .chip-stack.chip-animate-in .chip-label {
+  animation: none;
+}
+[data-animations="off"] .playing-card {
+  animation: none !important;
+  opacity: 1;
+}
+[data-animations="off"] .playing-card:nth-child(1) {
+  transform: rotate(-5deg);
+}
+[data-animations="off"] .playing-card:nth-child(2) {
+  transform: rotate(5deg);
+}
+[data-animations="off"] .result-symbol,
+[data-animations="off"] .result-symbol.wrong {
+  animation: none;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+[data-animations="off"] .accuracy-ring-wrap .ring-fg {
+  transition: none;
+}
+[data-animations="off"] .range-cell {
+  transition: none;
+}
+[data-animations="off"] .poker-table .seat .fold-text {
+  transition: none;
+}
+
 /* ===== DARK MODE OVERRIDES ===== */
 [data-theme="dark"] .tab-bar {
   background: #2a2a2a;
@@ -1243,6 +1309,7 @@ body {
       <div class="stat-label">連続 / 最高<span id="best-streak">0</span></div>
     </div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="テーマ切替"></button>
+    <button class="anim-toggle" id="anim-toggle" onclick="toggleAnimations()" title="アニメーション切替"></button>
     <button class="reset-btn" onclick="resetScore()" title="リセット">&#x21bb;</button>
   </div>
 
@@ -1735,11 +1802,22 @@ let state = {
 };
 
 let animationController = { abortController: null, isAnimating: false };
+let animationsEnabled = true;
 
 function sleep(ms, signal) {
+  const actualMs = animationsEnabled ? ms : 0;
   return new Promise((resolve, reject) => {
     if (signal && signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
-    const t = setTimeout(resolve, ms);
+    const t = setTimeout(resolve, actualMs);
+    if (signal) signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
+  });
+}
+
+function displayPause(ms, signal) {
+  const actualMs = animationsEnabled ? ms : 400;
+  return new Promise((resolve, reject) => {
+    if (signal && signal.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    const t = setTimeout(resolve, actualMs);
     if (signal) signal.addEventListener('abort', () => { clearTimeout(t); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
   });
 }
@@ -2210,7 +2288,11 @@ function showResultSymbol(isCorrect, correctAction) {
     el.innerHTML = '✕<span class="correct-action">' + correctAction + '</span>';
   }
   document.body.appendChild(el);
-  el.addEventListener('animationend', () => el.remove());
+  if (animationsEnabled) {
+    el.addEventListener('animationend', () => el.remove());
+  } else {
+    setTimeout(() => el.remove(), 500);
+  }
 }
 
 // ============ QUIZ LOGIC ============
@@ -2518,7 +2600,7 @@ async function answer(userAction) {
       await playPostAction(userAction, signal);
       if (scenario === 'vs-3bet' && state.threeBettorHand) {
         showOpponentHand(state.threeBettorHand);
-        await sleep(1200, signal);
+        await displayPause(1200, signal);
       }
     } catch (e) {
       if (e.name === 'AbortError') return;
@@ -2537,7 +2619,7 @@ async function answer(userAction) {
       animationController.abortController = new AbortController();
       animationController.isAnimating = true;
       try {
-        await sleep(1200, animationController.abortController.signal);
+        await displayPause(1200, animationController.abortController.signal);
       } catch (e) {
         if (e.name === 'AbortError') return;
         throw e;
@@ -2941,9 +3023,32 @@ function loadTheme() {
   updateThemeIcon();
 }
 
+// ============ ANIMATIONS ============
+
+function toggleAnimations() {
+  animationsEnabled = !animationsEnabled;
+  document.documentElement.setAttribute('data-animations', animationsEnabled ? 'on' : 'off');
+  localStorage.setItem('yokosawa-animations', animationsEnabled ? 'on' : 'off');
+  updateAnimationsIcon();
+}
+
+function updateAnimationsIcon() {
+  document.getElementById('anim-toggle').textContent = animationsEnabled ? '✨' : '⚡';
+}
+
+function loadAnimations() {
+  const saved = localStorage.getItem('yokosawa-animations');
+  if (saved === 'off') {
+    animationsEnabled = false;
+    document.documentElement.setAttribute('data-animations', 'off');
+  }
+  updateAnimationsIcon();
+}
+
 // ============ INIT ============
 
 loadTheme();
+loadAnimations();
 loadState();
 loadWrongAnswers();
 updateStats();
