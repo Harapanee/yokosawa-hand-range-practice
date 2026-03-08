@@ -780,9 +780,16 @@ body {
   text-align: center;
   transition: all 0.2s;
 }
-.kb-hint .kb-key:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+@media (hover: hover) and (pointer: fine) {
+  .kb-hint .kb-key:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .kb-hint .kb-key {
+    cursor: default;
+  }
 }
 .kb-hint .kb-key.editing {
   background: var(--accent);
@@ -2892,6 +2899,7 @@ function updateKbHint(scenario, suffix) {
   hint.querySelectorAll('.kb-key').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
+      if ('ontouchstart' in window || navigator.maxTouchPoints > 0) return;
       startKeyRebind(el, el.dataset.action);
     });
   });
