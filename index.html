@@ -2849,10 +2849,15 @@ document.addEventListener('keydown', (e) => {
     saveKeyBindings(kb);
     rebindState.el.classList.remove('editing');
     rebindState = null;
-    // Re-render hint with updated keys
-    const scenario = state.scenario || 'open';
-    const isReview = document.getElementById('quiz-scenario').value === 'review';
-    updateKbHint(scenario, isReview ? '復習' : null);
+    // Re-render hint with updated keys (use dropdown value, not state.scenario)
+    const dropdownVal = document.getElementById('quiz-scenario').value;
+    if (dropdownVal === 'mix') {
+      updateKbHint('vs-open');
+    } else if (dropdownVal === 'review') {
+      updateKbHint(state.scenario || 'open', '復習');
+    } else {
+      updateKbHint(dropdownVal);
+    }
     return;
   }
 
