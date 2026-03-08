@@ -1163,12 +1163,9 @@ body {
 
 /* ===== ANIMATION TOGGLE ===== */
 .anim-toggle {
-  position: absolute;
-  top: 14px;
-  left: 36px;
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 14px;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 6px;
@@ -1176,6 +1173,7 @@ body {
   opacity: 0.6;
   transition: opacity 0.2s;
   line-height: 1;
+  margin-left: 8px;
 }
 .anim-toggle:hover { opacity: 1; }
 
@@ -1309,7 +1307,6 @@ body {
       <div class="stat-label">連続 / 最高<span id="best-streak">0</span></div>
     </div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="テーマ切替"></button>
-    <button class="anim-toggle" id="anim-toggle" onclick="toggleAnimations()" title="アニメーション切替"></button>
     <button class="reset-btn" onclick="resetScore()" title="リセット">&#x21bb;</button>
   </div>
 
@@ -1325,6 +1322,7 @@ body {
     <select id="quiz-position-filter" onchange="nextQuestion()">
       <option value="all">全ポジション</option>
     </select>
+    <button class="anim-toggle" id="anim-toggle" onclick="toggleAnimations()" title="アニメーション切替"></button>
   </div>
 
   <div class="table-wrap">
