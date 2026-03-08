@@ -1188,14 +1188,6 @@ body {
 [data-animations="off"] .poker-table .seat {
   transition: none;
 }
-[data-animations="off"] .opponent-cards {
-  animation: none;
-  opacity: 1;
-}
-[data-animations="off"] #equity-display {
-  animation: none;
-  opacity: 1;
-}
 [data-animations="off"] .poker-table .chip-stack.chip-animate-in .chip-disc,
 [data-animations="off"] .poker-table .chip-stack.chip-animate-in .chip-label {
   animation: none;
@@ -2597,7 +2589,7 @@ async function answer(userAction) {
         }
       }
       await playPostAction(userAction, signal);
-      if (scenario === 'vs-3bet' && state.threeBettorHand) {
+      if (animationsEnabled && scenario === 'vs-3bet' && state.threeBettorHand) {
         showOpponentHand(state.threeBettorHand);
         await displayPause(1200, signal);
       }
@@ -2612,7 +2604,7 @@ async function answer(userAction) {
     void btnRow.offsetWidth;
     btnRow.classList.add('shake');
 
-    if (scenario === 'vs-3bet' && state.threeBettorHand) {
+    if (animationsEnabled && scenario === 'vs-3bet' && state.threeBettorHand) {
       showOpponentHand(state.threeBettorHand);
       if (animationController.abortController) animationController.abortController.abort();
       animationController.abortController = new AbortController();
