@@ -2611,8 +2611,10 @@ async function answer(userAction) {
           animationController.isAnimating = false;
           return;
         }
+        // チェーンしない場合はfoldアニメーション無しで次の問題へ
+      } else {
+        await playPostAction(userAction, signal);
       }
-      await playPostAction(userAction, signal);
       if (animationsEnabled && scenario === 'vs-3bet' && state.threeBettorHand) {
         showOpponentHand(state.threeBettorHand);
         await displayPause(1200, signal);
