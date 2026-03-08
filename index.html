@@ -1012,6 +1012,130 @@ body {
   font-weight: 600;
 }
 
+/* ===== GUIDE SCREEN ===== */
+.guide-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.guide-header h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-bright);
+}
+.guide-section {
+  width: 100%;
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.guide-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-bright);
+  -webkit-tap-highlight-color: transparent;
+}
+.guide-toggle .guide-arrow {
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: transform 0.3s;
+}
+.guide-section.open .guide-arrow {
+  transform: rotate(180deg);
+}
+.guide-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+.guide-section.open .guide-body {
+  max-height: 2000px;
+}
+.guide-content {
+  padding: 0 16px 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.guide-content h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 14px 0 6px;
+}
+.guide-content h3:first-child {
+  margin-top: 0;
+}
+.guide-content p {
+  margin: 6px 0;
+}
+.guide-content ul {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+.guide-content li {
+  margin: 3px 0;
+}
+.guide-content .tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 12px;
+}
+.guide-content .tier-table th,
+.guide-content .tier-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--bg-card-border);
+  text-align: left;
+}
+.guide-content .tier-table th {
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.guide-content .tier-badge {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.guide-content .rule-box {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.guide-content .key-badge {
+  display: inline-block;
+  background: var(--surface);
+  border: 1px solid var(--bg-card-border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 /* ===== SMALL SCREEN ===== */
 @media (max-width: 360px) {
   .poker-table { width: 260px; height: 156px; }
@@ -1191,6 +1315,130 @@ body {
   <div class="log-list" id="log-list"></div>
 </div>
 
+<!-- Guide Screen -->
+<div id="guide-screen" class="screen">
+  <div class="guide-header"><h2>ガイド</h2></div>
+
+  <!-- セクション1: このアプリについて -->
+  <div class="guide-section open">
+    <button class="guide-toggle" onclick="toggleGuideSection(this)">
+      <span>このアプリについて</span>
+      <span class="guide-arrow">&#9660;</span>
+    </button>
+    <div class="guide-body">
+      <div class="guide-content">
+        <p>ヨコサワのトーナメント用ハンドランキング（8段階の色分けシステム）を覚えるための練習アプリです。</p>
+        <p>ポーカーのプリフロップ（最初のベッティングラウンド）で、どのハンドをプレイし、どのハンドを降りるかを素早く判断できるようになることを目指します。</p>
+        <h3>3つのシナリオ</h3>
+        <ul>
+          <li><strong>オープン</strong> — 自分が最初にレイズする場面。ポジションに応じたレンジでRAISE or FOLD。</li>
+          <li><strong>vs オープン</strong> — 前のプレイヤーがレイズした場面。3BET / CALL / FOLD を判断。</li>
+          <li><strong>vs 3bet</strong> — 自分のオープンに対して3betが返ってきた場面。4BET / CALL / FOLD を判断。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- セクション2: 使い方 -->
+  <div class="guide-section">
+    <button class="guide-toggle" onclick="toggleGuideSection(this)">
+      <span>使い方</span>
+      <span class="guide-arrow">&#9660;</span>
+    </button>
+    <div class="guide-body">
+      <div class="guide-content">
+        <h3>クイズ画面</h3>
+        <p>テーブル上にポジションとハンドが表示されます。状況に応じて正しいアクションを選んでください。</p>
+        <ul>
+          <li>シナリオとポジションのフィルターで出題範囲を絞れます</li>
+          <li>正解数・正答率・連続正解数が上部に表示されます</li>
+          <li>オープンでRAISEした後、40%の確率で3bet問題に発展します</li>
+        </ul>
+        <h3>キーボードショートカット</h3>
+        <ul>
+          <li><span class="key-badge">R</span> RAISE &nbsp; <span class="key-badge">F</span> FOLD（オープン）</li>
+          <li><span class="key-badge">3</span> 3BET &nbsp; <span class="key-badge">C</span> CALL &nbsp; <span class="key-badge">F</span> FOLD（vs オープン）</li>
+          <li><span class="key-badge">4</span> 4BET &nbsp; <span class="key-badge">C</span> CALL &nbsp; <span class="key-badge">F</span> FOLD（vs 3bet）</li>
+        </ul>
+        <h3>レンジ表</h3>
+        <p>13×13のグリッドで各ハンドのティアを色分け表示します。ポジション別にフィルターすると、そのポジションでプレイするハンドだけがハイライトされます。</p>
+        <h3>履歴</h3>
+        <p>過去の回答を一覧で確認できます。正解/不正解でフィルターして、苦手なハンドを復習しましょう。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- セクション3: 判定ルール -->
+  <div class="guide-section">
+    <button class="guide-toggle" onclick="toggleGuideSection(this)">
+      <span>判定ルール</span>
+      <span class="guide-arrow">&#9660;</span>
+    </button>
+    <div class="guide-body">
+      <div class="guide-content">
+        <h3>ティア（色）の定義</h3>
+        <p>ハンドは強さ順にT1〜T8の8段階に分類されます。番号が小さいほど強いハンドです。</p>
+        <table class="tier-table">
+          <tr><th>ティア</th><th>色</th><th>意味</th><th>主なハンド例</th></tr>
+          <tr><td><span class="tier-badge" style="background:#1a237e"></span>T1</td><td>紺</td><td>プレミア</td><td>AA, KK, QQ, AKs, AKo</td></tr>
+          <tr><td><span class="tier-badge" style="background:#c62828"></span>T2</td><td>赤</td><td>8人中</td><td>JJ, TT, 99, AQs, AJs</td></tr>
+          <tr><td><span class="tier-badge" style="background:#f9a825"></span>T3</td><td>黄</td><td>8人弱</td><td>88, 77, KJs, QJs, JTs</td></tr>
+          <tr><td><span class="tier-badge" style="background:#2e7d32"></span>T4</td><td>緑</td><td>6〜7人</td><td>66, 55, A9s-A2s, KTs</td></tr>
+          <tr><td><span class="tier-badge" style="background:#0277bd"></span>T5</td><td>水色</td><td>4〜5人</td><td>44-22, Q9s, J9s, 98s</td></tr>
+          <tr><td><span class="tier-badge" style="background:#e0e0e0"></span>T6</td><td>白</td><td>3人</td><td>K8s-K2s, 87s, 76s</td></tr>
+          <tr><td><span class="tier-badge" style="background:#7b1fa2"></span>T7</td><td>紫</td><td>2人</td><td>Q5s-Q2s, 86s, 54s</td></tr>
+          <tr><td><span class="tier-badge" style="background:#e91e90"></span>T8</td><td>ピンク</td><td>BB対BTN専用</td><td>J5s-J2s, T6s, 85s</td></tr>
+        </table>
+
+        <h3>ポジションとオープンレンジ</h3>
+        <p>9人テーブル。後ろに人が多い＝厳しく、少ない＝広く参加OKです。</p>
+        <table class="tier-table">
+          <tr><th>ポジション</th><th>後ろ人数</th><th>maxTier</th><th>オープン範囲</th></tr>
+          <tr><td>UTG</td><td>8</td><td>T3</td><td>T1〜T3</td></tr>
+          <tr><td>UTG+1</td><td>7</td><td>T4</td><td>T1〜T4</td></tr>
+          <tr><td>MP</td><td>6</td><td>T4</td><td>T1〜T4</td></tr>
+          <tr><td>LJ</td><td>5</td><td>T5</td><td>T1〜T5</td></tr>
+          <tr><td>HJ</td><td>4</td><td>T5</td><td>T1〜T5</td></tr>
+          <tr><td>CO</td><td>3</td><td>T6</td><td>T1〜T6</td></tr>
+          <tr><td>BTN</td><td>2</td><td>T7</td><td>T1〜T7</td></tr>
+          <tr><td>SB</td><td>1</td><td>T7</td><td>T1〜T7</td></tr>
+          <tr><td>BB</td><td>0</td><td>-</td><td>オープン不可</td></tr>
+        </table>
+
+        <h3>オープン（自分が最初にレイズ）</h3>
+        <div class="rule-box">ハンドのティア ≦ ポジションのmaxTier → RAISE
+それ以外 → FOLD</div>
+        <p>例: HJ(maxT5) で AJo(T3) → T3 ≦ T5 → <strong>RAISE</strong></p>
+
+        <h3>vs オープン（前の人のレイズに対して）</h3>
+        <p>相手のmaxTierを基準に、自分のハンドのティアと比較します。</p>
+        <div class="rule-box">ティア ≦ openerMax - 2 → 3BET（2色上以上）
+ティア = openerMax - 1 → CALL（1色上）
+それ以外 → FOLD（同色以下）</div>
+        <p>例: COオープン(maxT6)に対してBTNで T9s(T4) → T4 ≦ T4 → <strong>3BET</strong></p>
+
+        <h3>BBの特殊ルール（vs オープン）</h3>
+        <p>BBは既に1BB払っているため、CALL範囲が広がります。</p>
+        <table class="tier-table">
+          <tr><th>オープナー</th><th>CALL上限</th><th>含まれる追加ティア</th></tr>
+          <tr><td>BTN</td><td>T8まで</td><td>紫 + ピンクまで</td></tr>
+          <tr><td>CO</td><td>T7まで</td><td>紫まで</td></tr>
+          <tr><td>それ以外</td><td>T6まで</td><td>白まで（基本防衛）</td></tr>
+        </table>
+
+        <h3>vs 3bet（3betされた後の対応）</h3>
+        <p>自分のmaxTierを基準にします。T1（AA,KK,QQ,AKs,AKo）は何があっても降りません。</p>
+        <div class="rule-box">ティア = T1 → 4BET（常に）
+ティア ≦ heroMax - 4 → 4BET
+ティア ≦ heroMax - 2 → CALL
+それ以外 → FOLD</div>
+        <p>例: BTN(maxT7)で KJs(T3) → T3 ≦ T3 → <strong>4BET</strong></p>
+        <p>例: BTN(maxT7)で A9s(T4) → T4 ≦ T5 → <strong>CALL</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Bottom Tab Bar -->
 <nav class="tab-bar">
   <div class="tab-bar-inner">
@@ -1205,6 +1453,10 @@ body {
     <button class="tab-btn" id="tab-log" onclick="showLog()">
       <span class="tab-icon">&#9776;</span>
       <span>履歴</span>
+    </button>
+    <button class="tab-btn" id="tab-guide" onclick="showGuide()">
+      <span class="tab-icon">?</span>
+      <span>ガイド</span>
     </button>
   </div>
 </nav>
@@ -2356,6 +2608,7 @@ function hideAllScreens() {
   document.getElementById('quiz-screen').classList.remove('active');
   document.getElementById('range-screen').classList.remove('active');
   document.getElementById('log-screen').classList.remove('active');
+  document.getElementById('guide-screen').classList.remove('active');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 }
 
@@ -2377,6 +2630,16 @@ function showQuiz() {
   hideAllScreens();
   document.getElementById('quiz-screen').classList.add('active');
   document.getElementById('tab-quiz').classList.add('active');
+}
+
+function showGuide() {
+  hideAllScreens();
+  document.getElementById('guide-screen').classList.add('active');
+  document.getElementById('tab-guide').classList.add('active');
+}
+
+function toggleGuideSection(btn) {
+  btn.closest('.guide-section').classList.toggle('open');
 }
 
 // ============ KEYBOARD ============
