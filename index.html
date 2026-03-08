@@ -93,10 +93,6 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   transition: transform 0.3s ease;
 }
-.tab-bar.hidden {
-  transform: translateY(100%);
-  pointer-events: none;
-}
 .tab-bar-inner {
   display: flex;
   width: 100%;
@@ -2805,27 +2801,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ============ TAB BAR AUTO-HIDE ============
-
-{
-  const tabBar = document.querySelector('.tab-bar');
-  let hideTimer = null;
-  const isMobile = () => window.innerWidth <= 768;
-
-  function showTabBar() {
-    tabBar.classList.remove('hidden');
-    clearTimeout(hideTimer);
-    if (isMobile()) {
-      hideTimer = setTimeout(() => tabBar.classList.add('hidden'), 3000);
-    }
-  }
-
-  window.addEventListener('scroll', showTabBar, { passive: true });
-
-  if (isMobile()) {
-    hideTimer = setTimeout(() => tabBar.classList.add('hidden'), 3000);
-  }
-}
+// ============ TAB BAR (always visible) ============
 
 // ============ SCENARIO CHANGE ============
 
