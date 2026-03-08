@@ -2477,8 +2477,6 @@ async function answer(userAction) {
     : (state.openerPosition ? state.openerPosition.name : '');
   if (!isCorrect) {
     addWrongAnswer(scenario, state.currentPosition.name, opponentName, hand);
-  } else if (isReviewMode) {
-    removeWrongAnswer(scenario, state.currentPosition.name, opponentName, hand);
   }
   updateReviewCount();
 
