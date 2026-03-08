@@ -767,6 +767,33 @@ body {
   font-weight: 600;
   opacity: 0.5;
 }
+.kb-hint .kb-key {
+  display: inline-block;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  min-width: 18px;
+  text-align: center;
+  transition: all 0.2s;
+}
+.kb-hint .kb-key:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.kb-hint .kb-key.editing {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  animation: pulse-key 0.8s ease-in-out infinite;
+}
+@keyframes pulse-key {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 /* ===== RANGE TABLE SCREEN ===== */
 .range-header {
@@ -1246,7 +1273,7 @@ body {
   </div>
 
 
-  <div class="kb-hint">R / F キー対応</div>
+  <div class="kb-hint"></div>
 </div>
 
 <!-- Range Table Screen -->
@@ -1321,9 +1348,10 @@ body {
         </ul>
         <h3>キーボードショートカット</h3>
         <ul>
-          <li><span class="key-badge">R</span> RAISE &nbsp; <span class="key-badge">F</span> FOLD（オープン）</li>
-          <li><span class="key-badge">3</span> 3BET &nbsp; <span class="key-badge">C</span> CALL &nbsp; <span class="key-badge">F</span> FOLD（vs オープン）</li>
-          <li><span class="key-badge">4</span> 4BET &nbsp; <span class="key-badge">C</span> CALL &nbsp; <span class="key-badge">F</span> FOLD（vs 3bet）</li>
+          <li><span class="key-badge">R</span> RAISE / 3BET / 4BET（攻撃アクション共通）</li>
+          <li><span class="key-badge">C</span> CALL</li>
+          <li><span class="key-badge">F</span> FOLD</li>
+          <li>クイズ画面下部のキーバッジをタップすると、キーを自由に変更できます</li>
         </ul>
         <h3>レンジ表</h3>
         <p>13×13のグリッドで各ハンドのティアを色分け表示します。ポジション別にフィルターすると、そのポジションでプレイするハンドだけがハイライトされます。</p>
@@ -2135,8 +2163,7 @@ async function tryChainTo3bet(signal) {
     ? chainRange[Math.floor(Math.random() * chainRange.length)]
     : null;
 
-  const hint = document.querySelector('.kb-hint');
-  hint.textContent = '4 / C / F キー対応';
+  updateKbHint('vs-3bet');
 
   updateButtons();
   return true;
@@ -2295,8 +2322,7 @@ async function nextQuestionReview(signal) {
     document.getElementById('playing-cards').innerHTML = '';
     const btnRow = document.getElementById('btn-row');
     btnRow.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:14px;padding:16px;">不正解の問題がありません</div>';
-    const hint = document.querySelector('.kb-hint');
-    hint.textContent = '復習モード';
+    updateKbHint('review');
     return;
   }
 
@@ -2306,13 +2332,11 @@ async function nextQuestionReview(signal) {
   state.currentHand = entry.hand;
   state.scenario = entry.scenario;
 
-  const hint = document.querySelector('.kb-hint');
-
   if (entry.scenario === 'open') {
     state.openerPosition = null;
     state.threeBettorPosition = null;
     state.threeBettorHand = null;
-    hint.textContent = 'R / F キー対応（復習）';
+    updateKbHint('open', '復習');
 
     const actIdx = ACTION_ORDER.indexOf(heroPos.name);
     const behindSet = new Set(ACTION_ORDER.slice(actIdx + 1));
@@ -2326,7 +2350,7 @@ async function nextQuestionReview(signal) {
     state.openerPosition = openerPos;
     state.threeBettorPosition = null;
     state.threeBettorHand = null;
-    hint.textContent = '3 / C / F キー対応（復習）';
+    updateKbHint('vs-open', '復習');
 
     const heroActIdx = ACTION_ORDER.indexOf(heroPos.name);
     const behindSet = new Set(ACTION_ORDER.slice(heroActIdx + 1));
@@ -2339,7 +2363,7 @@ async function nextQuestionReview(signal) {
     const threeBettorPos = POSITIONS.find(p => p.name === entry.openerPosition);
     state.openerPosition = state.currentPosition;
     state.threeBettorPosition = threeBettorPos;
-    hint.textContent = '4 / C / F キー対応（復習）';
+    updateKbHint('vs-3bet', '復習');
 
     const heroMax = heroPos.maxTier;
     const chainRange = ALL_HANDS.filter(h => { const t = getTier(h); return t >= 1 && t <= heroMax - 2; });
@@ -2743,24 +2767,111 @@ function toggleGuideSection(btn) {
   btn.closest('.guide-section').classList.toggle('open');
 }
 
+// ============ KEYBINDING ============
+
+const DEFAULT_KEYBINDINGS = { aggressive: 'R', call: 'C', fold: 'F' };
+
+function getKeyBindings() {
+  try {
+    const saved = localStorage.getItem('yokosawa-keybindings');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { ...DEFAULT_KEYBINDINGS };
+}
+
+function saveKeyBindings(bindings) {
+  localStorage.setItem('yokosawa-keybindings', JSON.stringify(bindings));
+}
+
+function getAggressiveLabel(scenario) {
+  if (scenario === 'vs-3bet') return '4BET';
+  if (scenario === 'vs-open') return '3BET';
+  return 'RAISE';
+}
+
+let rebindState = null;
+
+function updateKbHint(scenario, suffix) {
+  const hint = document.querySelector('.kb-hint');
+  const kb = getKeyBindings();
+
+  if (scenario === 'review' && !suffix) {
+    hint.innerHTML = '復習モード';
+    return;
+  }
+
+  const actions = [];
+  const aggLabel = getAggressiveLabel(scenario || 'open');
+
+  if (scenario === 'open') {
+    actions.push({ key: kb.aggressive, label: aggLabel, action: 'aggressive' });
+    actions.push({ key: kb.fold, label: 'FOLD', action: 'fold' });
+  } else {
+    actions.push({ key: kb.aggressive, label: aggLabel, action: 'aggressive' });
+    actions.push({ key: kb.call, label: 'CALL', action: 'call' });
+    actions.push({ key: kb.fold, label: 'FOLD', action: 'fold' });
+  }
+
+  hint.innerHTML = actions.map(a =>
+    `<span class="kb-key" data-action="${a.action}" title="クリックでキー変更">${a.key}</span> ${a.label}`
+  ).join('&nbsp;&nbsp;') + (suffix ? `（${suffix}）` : '');
+
+  hint.querySelectorAll('.kb-key').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startKeyRebind(el, el.dataset.action);
+    });
+  });
+}
+
+function startKeyRebind(el, action) {
+  if (rebindState) {
+    rebindState.el.classList.remove('editing');
+  }
+  el.classList.add('editing');
+  rebindState = { el, action };
+}
+
 // ============ KEYBOARD ============
 
 document.addEventListener('keydown', (e) => {
+  // Handle rebinding mode
+  if (rebindState) {
+    e.preventDefault();
+    const newKey = e.key.toUpperCase();
+    if (newKey === 'ESCAPE') {
+      rebindState.el.classList.remove('editing');
+      rebindState = null;
+      return;
+    }
+    const kb = getKeyBindings();
+    kb[rebindState.action] = newKey;
+    saveKeyBindings(kb);
+    rebindState.el.classList.remove('editing');
+    rebindState = null;
+    // Re-render hint with updated keys
+    const scenario = state.scenario || 'open';
+    const isReview = document.getElementById('quiz-scenario').value === 'review';
+    updateKbHint(scenario, isReview ? '復習' : null);
+    return;
+  }
+
   if (!document.getElementById('quiz-screen').classList.contains('active')) return;
   const scenario = state.scenario || 'open';
   const key = e.key.toUpperCase();
+  const kb = getKeyBindings();
 
   if (scenario === 'open') {
-    if (key === 'R') answer('RAISE');
-    if (key === 'F') answer('FOLD');
+    if (key === kb.aggressive) answer('RAISE');
+    if (key === kb.fold) answer('FOLD');
   } else if (scenario === 'vs-open') {
-    if (key === '3') answer('3BET');
-    if (key === 'C') answer('CALL');
-    if (key === 'F') answer('FOLD');
+    if (key === kb.aggressive) answer('3BET');
+    if (key === kb.call) answer('CALL');
+    if (key === kb.fold) answer('FOLD');
   } else if (scenario === 'vs-3bet') {
-    if (key === '4') answer('4BET');
-    if (key === 'C') answer('CALL');
-    if (key === 'F') answer('FOLD');
+    if (key === kb.aggressive) answer('4BET');
+    if (key === kb.call) answer('CALL');
+    if (key === kb.fold) answer('FOLD');
   }
 });
 
@@ -2787,15 +2898,12 @@ function onScenarioChange() {
     document.getElementById('quiz-position-label').style.display = 'none';
   }
 
-  const hint = document.querySelector('.kb-hint');
-  if (scenario === 'open') {
-    hint.textContent = 'R / F キー対応';
-  } else if (scenario === 'vs-open') {
-    hint.textContent = '3 / C / F キー対応';
+  if (scenario === 'review') {
+    updateKbHint('review');
   } else if (scenario === 'mix') {
-    hint.textContent = 'R / 3 / C / F キー対応';
-  } else if (scenario === 'review') {
-    hint.textContent = '復習モード';
+    updateKbHint('vs-open');
+  } else {
+    updateKbHint(scenario);
   }
 
   nextQuestion();
