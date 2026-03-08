@@ -1163,19 +1163,20 @@ body {
 
 /* ===== ANIMATION TOGGLE ===== */
 .anim-toggle {
-  background: none;
-  border: none;
-  font-size: 14px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 2px solid var(--bg-card-border);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 14px;
+  border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.6;
-  transition: opacity 0.2s;
   line-height: 1;
   margin-left: 8px;
+  white-space: nowrap;
 }
-.anim-toggle:hover { opacity: 1; }
 
 /* ===== ANIMATIONS OFF ===== */
 [data-animations="off"] .screen.active {
@@ -3031,7 +3032,7 @@ function toggleAnimations() {
 }
 
 function updateAnimationsIcon() {
-  document.getElementById('anim-toggle').textContent = animationsEnabled ? '✨' : '⚡';
+  document.getElementById('anim-toggle').textContent = animationsEnabled ? '演出ON' : '演出OFF';
 }
 
 function loadAnimations() {
