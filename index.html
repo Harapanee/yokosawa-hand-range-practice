@@ -931,28 +931,51 @@ body {
 }
 .log-entry {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 2px solid var(--bg-card-border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-left: 5px solid var(--bg-card-border);
+}
+.log-entry.correct {
+  background: rgba(88,204,2,0.06);
+}
+.log-entry.wrong {
+  background: rgba(255,75,75,0.06);
+}
+.log-row-top {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+.log-row-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
+}
+.log-result {
+  font-family: 'Nunito', sans-serif;
   font-size: 13px;
+  font-weight: 700;
 }
-.log-entry:last-child { border-bottom: none; }
-.log-entry .log-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-  width: 22px;
-  text-align: center;
+.log-result.correct { color: var(--green); }
+.log-result.wrong { color: var(--red); }
+.log-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.log-entry .log-icon.correct { color: var(--green); }
-.log-entry .log-icon.wrong { color: var(--red); }
 .log-entry .log-pos {
   background: #f0f0f0;
   color: var(--text-dim);
   padding: 2px 8px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -961,40 +984,27 @@ body {
   font-weight: 700;
   color: var(--text-bright);
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 16px;
 }
-.log-entry .log-detail {
-  color: var(--text-dim);
-  font-size: 11px;
-  margin-left: auto;
-  text-align: right;
-  flex-shrink: 0;
-}
-.log-entry .log-tier-badge {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  vertical-align: middle;
-  margin-right: 3px;
-}
-.log-entry .log-answer {
+.log-answers {
   font-family: 'Nunito', sans-serif;
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 4px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: right;
+  flex-shrink: 1;
+  min-width: 0;
 }
-.log-answer.raise { background: rgba(88,204,2,0.12); color: var(--green); }
-.log-answer.call { background: rgba(28,176,246,0.12); color: var(--blue); }
-.log-answer.fold { background: rgba(255,75,75,0.12); color: var(--red); }
+.log-answers .raise { color: var(--green); font-weight: 700; }
+.log-answers .call { color: var(--blue); font-weight: 700; }
+.log-answers .fold { color: var(--red); font-weight: 700; }
+.log-answers .correct-answer { color: var(--green); font-weight: 700; }
 .log-entry .log-scenario {
   font-family: 'Nunito', sans-serif;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
   flex-shrink: 0;
   letter-spacing: 0.3px;
 }
@@ -1002,7 +1012,7 @@ body {
 .log-scenario.sc-vs-open { background: rgba(28,176,246,0.12); color: var(--blue); }
 .log-scenario.sc-vs-3bet { background: rgba(255,150,0,0.12); color: var(--orange); }
 .log-count {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
   text-align: center;
   margin-bottom: 10px;
@@ -1274,7 +1284,14 @@ body {
   color: #555;
 }
 [data-theme="dark"] .log-entry {
-  border-bottom-color: #333;
+  border-color: #444;
+  background: #2a2a2a;
+}
+[data-theme="dark"] .log-entry.correct {
+  background: rgba(88,204,2,0.08);
+}
+[data-theme="dark"] .log-entry.wrong {
+  background: rgba(255,75,75,0.08);
 }
 [data-theme="dark"] .log-entry .log-pos {
   background: #333;
@@ -2775,34 +2792,54 @@ function renderLog() {
   if (filter === 'wrong') entries = questionLog.filter(e => !e.isCorrect);
   else if (filter === 'correct') entries = questionLog.filter(e => e.isCorrect);
 
-  const wrongCount = questionLog.filter(e => !e.isCorrect).length;
-  countEl.textContent = `全${questionLog.length}問（不正解: ${wrongCount}問）`;
+  const correctCount = questionLog.filter(e => e.isCorrect).length;
+  const total = questionLog.length;
+  if (total === 0) {
+    countEl.textContent = '全0問';
+  } else {
+    const rate = Math.round(correctCount / total * 100);
+    countEl.textContent = `全${total}問 ・ 正解${correctCount}問 ・ 正答率 ${rate}%`;
+  }
 
   if (entries.length === 0) {
     list.innerHTML = '<div class="log-empty">まだ履歴がありません</div>';
     return;
   }
 
-  list.innerHTML = entries.map(e => {
+  list.innerHTML = entries.map((e, index) => {
     const tierColor = TIER_COLORS[e.tier] || TIER_COLORS[0];
-    const tierLabel = e.tier === 0 ? 'Fold' : 'T' + e.tier;
-    const iconClass = e.isCorrect ? 'correct' : 'wrong';
+    const statusClass = e.isCorrect ? 'correct' : 'wrong';
     const icon = e.isCorrect ? '&#10004;' : '&#10008;';
-    const ansClass = e.userAnswer === 'FOLD' ? 'fold'
-      : e.userAnswer === 'CALL' ? 'call' : 'raise';
+    const statusText = e.isCorrect ? '正解' : '不正解';
+    const num = questionLog.length - questionLog.indexOf(e);
     const posText = e.opponentPosition
       ? e.position + ' vs ' + e.opponentPosition
       : e.position;
     const scenarioLabel = e.scenario === 'open' ? 'OPEN'
       : e.scenario === 'vs-open' ? 'vsOP' : 'vs3B';
     const scenarioClass = 'sc-' + e.scenario;
-    return '<div class="log-entry">' +
-      '<span class="log-icon ' + iconClass + '">' + icon + '</span>' +
-      '<span class="log-pos">' + posText + '</span>' +
-      '<span class="log-scenario ' + scenarioClass + '">' + scenarioLabel + '</span>' +
-      '<span class="log-hand">' + e.hand + '</span>' +
-      '<span class="log-answer ' + ansClass + '">' + e.userAnswer + '</span>' +
-      '<span class="log-detail"><span class="log-tier-badge" style="background:' + tierColor + '"></span>' + tierLabel + ' → ' + e.correctAnswer + '</span>' +
+    const userAnsClass = e.userAnswer === 'FOLD' ? 'fold'
+      : e.userAnswer === 'CALL' ? 'call' : 'raise';
+    const correctAnsClass = e.correctAnswer === 'FOLD' ? 'fold'
+      : e.correctAnswer === 'CALL' ? 'call' : 'raise';
+    let answersHtml;
+    if (e.isCorrect) {
+      answersHtml = '<span class="correct-answer">' + e.correctAnswer + '</span>';
+    } else {
+      answersHtml = 'あなた: <span class="' + userAnsClass + '">' + e.userAnswer + '</span> → 正解: <span class="correct-answer">' + e.correctAnswer + '</span>';
+    }
+    return '<div class="log-entry ' + statusClass + '" style="border-left-color:' + tierColor + '">' +
+      '<div class="log-row-top">' +
+        '<span class="log-result ' + statusClass + '">#' + num + ' ' + icon + ' ' + statusText + '</span>' +
+        '<span class="log-meta">' +
+          '<span class="log-scenario ' + scenarioClass + '">' + scenarioLabel + '</span>' +
+          '<span class="log-pos">' + posText + '</span>' +
+        '</span>' +
+      '</div>' +
+      '<div class="log-row-bottom">' +
+        '<span class="log-hand">' + e.hand + '</span>' +
+        '<span class="log-answers">' + answersHtml + '</span>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
